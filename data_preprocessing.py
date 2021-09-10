@@ -38,6 +38,7 @@ def transform_single_subset_into_batches(data_path: str, subset_dir_name: str):
     origin_subset_data = np.load(subset_data_path)
 
     batches_data = transform_3d_array_into_batches(origin_subset_data)
+    batches_data = batches_data.reshape(*batches_data.shape, 1)
     np.save(subset_data_path, batches_data)
 
     origin_subset_data_path = os.path.join(data_path, subset_dir_name, f'origin_{subset_dir_name}.npy')
