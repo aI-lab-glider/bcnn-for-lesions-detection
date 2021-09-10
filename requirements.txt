@@ -1,0 +1,2 @@
+nibabel~=3.2.1
+pycimg~=1.0.2
