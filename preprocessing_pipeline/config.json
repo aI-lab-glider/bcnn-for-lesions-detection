@@ -19,7 +19,7 @@
         "train_end": 1,
         "test_start": 1,
         "test_end": 1,
-        "valid__start": 1,
+        "valid_start": 1,
         "valid_end": 1
     },
     "create_batches": {

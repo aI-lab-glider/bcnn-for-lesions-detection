@@ -6,7 +6,7 @@ from shutil import copyfile
 
 class CreateFolderStructure(ChainLink):
     def run(self, global_config: Dict[str, str]):
-        link_config = getattr(global_config, 'create_folder_structure', None)
+        link_config = global_config.get('create_folder_structure', None)
         if self.is_activated(link_config):
             prefixes = ['train', 'test', 'valid']
             config_keys = [(f'{prefix}_start', f'{prefix}_end')
