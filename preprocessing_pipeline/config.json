@@ -1,0 +1,28 @@
+{
+    "transform_nifti_to_npy": {
+        "operations": [
+            {
+                "path_from": "/net/scratch/people/plgztabor/LIDC-IDRI/IMAGES",
+                "path_to": "nifti/imgs"
+            },
+            {
+                "path_from": "/net/scratch/people/plgztabor/LIDC-IDRI/MASKS",
+                "path_to": "nifti/targets"
+            }
+        ]
+    },
+    "create_folder_structure": {
+        "destination_path": "data",
+        "imgs_path": "nifti/imgs",
+        "targets_path": "nifti/targets",
+        "train_start": 1,
+        "train_end": 1,
+        "test_start": 1,
+        "test_end": 1,
+        "valid__start": 1,
+        "valid_end": 1
+    },
+    "create_batches": {
+        "data_path": "data"
+    }
+}

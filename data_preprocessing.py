@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 
-def transform_3d_array_into_batches(data_subset: np.array, batch_size: tuple = (40, 40, 9)) -> np.array:
+def transform_3d_array_into_batches(data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
     """
     Original data (numpy array) transformation into the array of 3d batches.
     :param data_subset: single subset of data (or labels): np.array
@@ -20,7 +20,7 @@ def transform_3d_array_into_batches(data_subset: np.array, batch_size: tuple = (
         for y in range(origin_y // batch_y)[:-1]:
             for z in range(origin_z // batch_z)[:-1]:
                 batch = data_subset[x * batch_x:(x + 1) * batch_x, y * batch_y:(y + 1) * batch_y,
-                        z * batch_z:(z + 1) * batch_z]
+                                    z * batch_z:(z + 1) * batch_z]
 
                 batches.append(batch)
 
@@ -34,14 +34,16 @@ def transform_single_subset_into_batches(data_path: str, subset_dir_name: str):
     :param data_path: path to the directory with data divided into train, test and valid subsets and theirs labels: str
     :param subset_dir_name: name of the data (or label) subset: str
     """
-    subset_data_path = os.path.join(data_path, subset_dir_name, f'{subset_dir_name}.npy')
+    subset_data_path = os.path.join(
+        data_path, subset_dir_name, f'{subset_dir_name}.npy')
     origin_subset_data = np.load(subset_data_path)
 
     batches_data = transform_3d_array_into_batches(origin_subset_data)
     batches_data = batches_data.reshape(*batches_data.shape, 1)
     np.save(subset_data_path, batches_data)
 
-    origin_subset_data_path = os.path.join(data_path, subset_dir_name, f'origin_{subset_dir_name}.npy')
+    origin_subset_data_path = os.path.join(
+        data_path, subset_dir_name, f'origin_{subset_dir_name}.npy')
     np.save(origin_subset_data_path, origin_subset_data)
 
 
@@ -70,10 +72,22 @@ def transform_data_into_batches(data_path: str) -> None:
         transform_single_subset_into_batches(data_path, subset_dir_name)
 
 
+def tranform_nifti_to_npy(data_path: str):
+    """
+    Transforms .nifti to .npy
+    """
+
+
 def main():
-    parser = argparse.ArgumentParser('Transform CT scans into arrays of batches')
-    parser.add_argument('--data-path', help='Path to the directory with data', default='data')
+    parser = argparse.ArgumentParser(
+        'Transform CT scans into arrays of batches')
+    parser.add_argument(
+        '--data-path', help='Path to the directory with data', default='data')
+    parser.add_argument('-n', '--from-nifti', action='store_true',
+                        help='Runs preprocessing, but first transforms .nifti file to .npy')
     args = parser.parse_args()
+
+    if args.from_nifti:
 
     transform_data_into_batches(args.data_path)
 
