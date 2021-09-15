@@ -1,3 +1,4 @@
+from typing import Dict
 from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
 import os
 import numpy as np
@@ -5,7 +6,7 @@ import nibabel as nib
 
 
 class TransformNiftiToNpy(ChainLink):
-    def run(self, global_config: dict[str, str]):
+    def run(self, global_config: Dict[str, str]):
         link_config = getattr(global_config, 'transform_nifti_to_npy', None)
         if self.is_activated(link_config):
             for operation in link_config["operations"]:

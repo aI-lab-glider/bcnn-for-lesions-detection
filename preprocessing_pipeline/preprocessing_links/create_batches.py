@@ -1,9 +1,10 @@
+from typing import Dict
 from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
 import os
 
 
 class CreateBatches(ChainLink):
-    def run(self, global_config: dict[str, str]):
+    def run(self, global_config: Dict[str, str]):
         link_config = getattr(global_config, 'create_batches', None)
         if self.is_activated(link_config):
             self._create_batches(link_config['data_path'])

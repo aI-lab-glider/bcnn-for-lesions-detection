@@ -1,11 +1,11 @@
-from typing import List
+from typing import Dict, List
 from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
 import os
 from shutil import copyfile
 
 
 class CreateFolderStructure(ChainLink):
-    def run(self, global_config: dict[str, str]):
+    def run(self, global_config: Dict[str, str]):
         link_config = getattr(global_config, 'create_folder_structure', None)
         if self.is_activated(link_config):
             prefixes = ['train', 'test', 'valid']
