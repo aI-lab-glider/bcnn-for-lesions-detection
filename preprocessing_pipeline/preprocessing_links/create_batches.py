@@ -3,6 +3,7 @@ from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
 import os
 import numpy as np
 
+
 class CreateBatches(ChainLink):
     def run(self, global_config: Dict[str, str]):
         link_config = global_config.get('create_batches', None)
@@ -41,18 +42,20 @@ class CreateBatches(ChainLink):
         :param data_path: path to the directory with data divided into train, test and valid subsets and theirs labels: str
         :param subset_dir_name: name of the data (or label) subset: str
         """
-        subset_data_path = os.path.join(
-            data_path, subset_dir_name, f'{subset_dir_name}.npy')
-        origin_subset_data = np.load(subset_data_path)
+        for file_name in os.listdir(subset_dir_name):
+            subset_data_path = os.path.join(
+                data_path, subset_dir_name, f'{file_name}.npy')
+            origin_subset_data = np.load(subset_data_path)
 
-        batches_data = self.stransform_3d_array_into_batches(
-            origin_subset_data)
-        batches_data = batches_data.reshape(*batches_data.shape, 1)
-        np.save(subset_data_path, batches_data)
+            batches_data = self.stransform_3d_array_into_batches(
+                origin_subset_data)
+            batches_data = batches_data.reshape(*batches_data.shape, 1)
 
-        origin_subset_data_path = os.path.join(
-            data_path, subset_dir_name, f'origin_{subset_dir_name}.npy')
-        np.save(origin_subset_data_path, origin_subset_data)
+            np.save(subset_data_path, batches_data)
+
+            origin_subset_data_path = os.path.join(
+                data_path, subset_dir_name, f'origin_{file_name}.npy')
+            np.save(origin_subset_data_path, origin_subset_data)
 
     def transform_3d_array_into_batches(self, data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
         """
