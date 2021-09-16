@@ -32,6 +32,7 @@ class CreateBatches(ChainLink):
         :param data_path: path to the directory with data divided into train, test and valid subsets: str
         """
         for subset_dir_name in os.listdir(dir_path):
+            print(subset_dir_name)
             self.transform_single_subset_into_batches(
                 dir_path, subset_dir_name)
 
@@ -42,19 +43,19 @@ class CreateBatches(ChainLink):
         :param data_path: path to the directory with data divided into train, test and valid subsets and theirs labels: str
         :param subset_dir_name: name of the data (or label) subset: str
         """
-        for file_name in os.listdir(subset_dir_name):
+        for file_name in os.listdir(os.path.join(data_path, subset_dir_name)):
             subset_data_path = os.path.join(
-                data_path, subset_dir_name, f'{file_name}.npy')
+                data_path, subset_dir_name, f'{file_name}')
             origin_subset_data = np.load(subset_data_path)
 
-            batches_data = self.stransform_3d_array_into_batches(
+            batches_data = self.transform_3d_array_into_batches(
                 origin_subset_data)
             batches_data = batches_data.reshape(*batches_data.shape, 1)
 
             np.save(subset_data_path, batches_data)
 
             origin_subset_data_path = os.path.join(
-                data_path, subset_dir_name, f'origin_{file_name}.npy')
+                data_path, subset_dir_name, f'origin_{file_name}')
             np.save(origin_subset_data_path, origin_subset_data)
 
     def transform_3d_array_into_batches(self, data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
