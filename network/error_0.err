@@ -1,0 +1,32 @@
+ plgrid/apps/cuda/10.1 loaded.
+    *********************** IMPORTANT / LICENSING INFORMATION
+****************************
+    By using plgrid/libs/cudnn/7.6.5-cuda-10.1 module you accept NVIDIA cuDNN
+SLA
+    available at https://docs.nvidia.com/deeplearning/cudnn/sla/index.html
+    *********************** IMPORTANT / LICENSING INFORMATION
+**************************** 
+ plgrid/libs/cudnn/7.6.5-cuda-10.1 loaded.
+ plgrid/libs/tensorflow-gpu/2.2.0-python-3.7 loaded.
+ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'bcnn/requirements.txt'
+WARNING: You are using pip version 20.2.2; however, version 21.2.4 is available.
+You should consider upgrading via the '/net/software/local/python/3.7/bin/python3.7 -m pip install --upgrade pip' command.
+WARNING - utils - No observers have been added to this run
+INFO - utils - Running command 'train'
+INFO - utils - Started
+ERROR - utils - Failed after 0:00:01!
+Traceback (most recent calls WITHOUT Sacred internals):
+  File "train.py", line 35, in train
+    weights_path=weights_path)
+  File "/net/people/plgforobohd/3d-cnn-prometheus/network/model.py", line 109, in get_model
+    prior_std=prior_std)
+  File "/net/people/plgforobohd/3d-cnn-prometheus/network/bayesian_vnet.py", line 69, in bayesian_vnet
+    padding=padding)
+  File "/net/people/plgforobohd/3d-cnn-prometheus/network/bayesian_vnet.py", line 12, in down_stage
+    activation=activation, padding=padding)(inputs)
+  File "/net/software/local/tensorflow-gpu/2.2.0-python-3.7/lib/python3.7/site-packages/tensorflow/python/keras/engine/base_layer.py", line 886, in __call__
+    self.name)
+  File "/net/software/local/tensorflow-gpu/2.2.0-python-3.7/lib/python3.7/site-packages/tensorflow/python/keras/engine/input_spec.py", line 180, in assert_input_compatibility
+    str(x.shape.as_list()))
+ValueError: Input 0 of layer conv3d is incompatible with the layer: expected ndim=5, found ndim=7. Full shape received: [None, 16, 32, 32, 1, 16, 1]
+

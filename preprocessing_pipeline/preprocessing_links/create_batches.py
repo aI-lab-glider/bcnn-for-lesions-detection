@@ -54,9 +54,6 @@ class CreateBatches(ChainLink):
 
             np.save(subset_data_path, batches_data)
 
-            origin_subset_data_path = os.path.join(
-                data_path, subset_dir_name, f'origin_{file_name}')
-            np.save(origin_subset_data_path, origin_subset_data)
 
     def transform_3d_array_into_batches(self, data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
         """
