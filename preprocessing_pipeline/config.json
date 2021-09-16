@@ -1,6 +1,6 @@
 {
     "transform_nifti_to_npy": {
-        "operations": [
+          "operations": [
             {
                 "path_from": "/net/scratch/people/plgztabor/LIDC-IDRI/IMAGES",
                 "path_to": "nifti/imgs",

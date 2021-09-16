@@ -9,16 +9,15 @@ class TransformNiftiToNpy(ChainLink):
     def run(self, global_config: Dict[str, str]):
         link_config = global_config.get('transform_nifti_to_npy', None)
         if self.is_activated(link_config):
-            amount = 0
             for operation in link_config["operations"]:
-                if amount == link_config["amount"]:
-                    break
-                amount += 1
                 self._transform_nifti_to_npy(
-                    operation['path_from'], operation['path_to'])
+                    operation["amount"], operation['path_from'], operation['path_to'])
 
-    def _transform_nifti_to_npy(self, path_from: str, path_to: str):
-        for nifti_file_name in os.listdir(path_from):
+    def _transform_nifti_to_npy(self, amount: int, path_from: str, path_to: str):
+        transformed = 0 
+        for nifti_file_name in sorted(os.listdir(path_from)):
+            if transformed == amount:
+                break
             nifti_path = os.path.join(path_from, nifti_file_name)
             if not os.path.isdir(path_to):
                 os.makedirs(path_to)
@@ -30,3 +29,4 @@ class TransformNiftiToNpy(ChainLink):
                     path_to, nifti_file_name.split('.')[0] + '.npy')
                 with open(npy_path, 'wb+') as f:
                     np.save(f, npy)
+                    transformed += 1

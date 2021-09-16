@@ -25,9 +25,13 @@ class CreateFolderStructure(ChainLink):
                  data_from=link_config['targets_path'], data_prefix='MASK')
 
     def _copy_data(self, destination_root: str, destination_leafs: List[str], data_from: str, data_prefix: str, ranges: List[range]):
-        for dir_name, rng in zip(destination_leafs, ranges):
-            os.mkdir(dir_name)
-            from_paths = [f'{data_from}/{data_prefix}_{i:04d}' for i in rng]
+        if not os.path.isdir(destination_root):
+              os.mkdir(destination_root)
+        destinations = [f'{destination_root}/{leaf}' for leaf in destination_leafs]
+        for dir_name, rng in zip(destinations, ranges):
+            if not os.path.isdir(dir_name):
+                os.mkdir(dir_name)
+            from_paths = [f'{data_from}/{data_prefix}_{i:04d}.npy' for i in rng]
             to_paths = [
                 f'{destination_root}/{data_prefix}_{i:04d}' for i in rng]
             for from_p, to_p in zip(from_paths, to_paths):
