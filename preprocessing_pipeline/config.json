@@ -3,11 +3,13 @@
         "operations": [
             {
                 "path_from": "/net/scratch/people/plgztabor/LIDC-IDRI/IMAGES",
-                "path_to": "nifti/imgs"
+                "path_to": "nifti/imgs",
+                "amount": 2
             },
             {
                 "path_from": "/net/scratch/people/plgztabor/LIDC-IDRI/MASKS",
-                "path_to": "nifti/targets"
+                "path_to": "nifti/targets",
+                "amount": 2
             }
         ]
     },
@@ -16,11 +18,11 @@
         "imgs_path": "nifti/imgs",
         "targets_path": "nifti/targets",
         "train_start": 1,
-        "train_end": 1,
+        "train_end": 2,
         "test_start": 1,
-        "test_end": 1,
+        "test_end": 2,
         "valid_start": 1,
-        "valid_end": 1
+        "valid_end": 2
     },
     "create_batches": {
         "data_path": "data"
