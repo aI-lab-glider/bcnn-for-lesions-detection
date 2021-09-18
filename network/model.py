@@ -11,6 +11,7 @@ from dropout_unet import dropout_unet
 from dropout_vnet import dropout_vnet
 from utils import ex, get_latest_file, variational_free_energy_loss
 
+from typing import Union
 
 @ex.capture
 def load_model(input_shape, weights_path, net, prior_std,
@@ -48,6 +49,26 @@ def load_model(input_shape, weights_path, net, prior_std,
 
 
 @ex.capture
+def get_paths(network_type: Union['bayesian', 'dropout', 'ensemble'], weights_path, weights_dir, weights_subdir=None):
+    checkpoint_path = (weights_dir + f"/{network_type}/{network_type}" + "-{epoch:02d}"
+    "-{val_acc:.3f}-{val_loss:.0f}.h5")
+    if not weights_path:
+        weights_path = get_latest_file(weights_dir + f"/{weights_subdir or network_type}")
+    return checkpoint_path, weights_path 
+
+@ex.capture
+def bayesian_net_factory(vnet):
+    return bayesian_vnet if vnet else bayesian_unet 
+
+@ex.capture
+def dropout_net_factory(vnet):
+    return dropout_vnet if vnet else dropout_unet
+
+@ex.capture
+def ensemble_net_factory():
+    return ensemble_vnet, latest_weights_path
+
+@ex.capture
 def get_model(input_shape, weights_dir, resume, bayesian,
               vnet, prior_std, kernel_size, activation, padding,
               kl_alpha, kl_start_epoch, kl_alpha_increase_per_epoch,
@@ -64,39 +85,18 @@ def get_model(input_shape, weights_dir, resume, bayesian,
 
     # Sets variables for ensemble model.
     if ensemble:
-        checkpoint_path = (weights_dir + "/ensemble/ensemble-{epoch:02d}"
-        "-{val_acc:.3f}-{val_loss:.0f}.h5")
-
-        if weights_path:
-            latest_weights_path = weights_path
-        else:
-            latest_weights_path = get_latest_file(weights_dir + "/bayesian")
-
-        net = ensemble_vnet
+        checkpoint_path, latest_weights_path = get_paths('ensemble', weights_subdir='bayesian') # TODO looks like error, but it was in original code
+        net = ensemble_net_factory() 
 
     # Sets variables for bayesian model.
     elif bayesian:
-        checkpoint_path = (weights_dir + "/bayesian/bayesian-{epoch:02d}"
-        "-{val_acc:.3f}-{val_loss:.0f}.h5")
-
-        if weights_path:
-            latest_weights_path = weights_path
-        else:
-            latest_weights_path = get_latest_file(weights_dir + "/bayesian")
-
-        net = bayesian_vnet if vnet else bayesian_unet
+        checkpoint_path, latest_weights_path = get_paths('bayesian')
+        net = bayesian_net_factory()
 
     # Sets variables for dropout model.
     else:
-        checkpoint_path = (weights_dir + "/dropout/dropout-{epoch:02d}"
-        "-{val_acc:.3f}-{val_loss:.2f}.h5")
-
-        if weights_path:
-            latest_weights_path = weights_path
-        else:
-            latest_weights_path = get_latest_file(weights_dir + "/dropout")
-
-        net = dropout_vnet if vnet else dropout_unet
+        checkpoint_path, latest_weights_path = get_paths('dropout')
+        net = dropout_net_factory()
 
     # Loads or creates model.
     if latest_weights_path and resume:
@@ -132,4 +132,7 @@ def get_model(input_shape, weights_dir, resume, bayesian,
                   metrics=["accuracy"])
 
     return model, checkpoint_path, kl_alpha
+
+
+
 

@@ -32,7 +32,6 @@ class CreateBatches(ChainLink):
         :param data_path: path to the directory with data divided into train, test and valid subsets: str
         """
         for subset_dir_name in os.listdir(dir_path):
-            print(subset_dir_name)
             self.transform_single_subset_into_batches(
                 dir_path, subset_dir_name)
 
@@ -50,8 +49,6 @@ class CreateBatches(ChainLink):
 
             batches_data = self.transform_3d_array_into_batches(
                 origin_subset_data)
-            batches_data = batches_data.reshape(*batches_data.shape, 1)
-
             np.save(subset_data_path, batches_data)
 
 

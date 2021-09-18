@@ -37,7 +37,6 @@ def absolute_file_paths(directory, match=""):
             if match in f:
                 paths.append(os.path.abspath(os.path.join(root, f)))
         break
-    print(paths)
     return paths
 
 

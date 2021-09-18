@@ -1,21 +1,22 @@
 {
     "orig_train_dir": "../data/train",
     "orig_valid_dir": "../data/valid",
-    "orig_test_dir": "../data/test", 
-    "orig_train_targets_dir": "../data/train_targets", 
-    "orig_valid_targets_dir": "../data/valid_targets", 
-    "orig_test_targets_dir": "../data/test_targets", 
-
+    "orig_test_dir": "../data/test",
+    "orig_train_targets_dir": "../data/train_targets",
+    "orig_valid_targets_dir": "../data/valid_targets",
+    "orig_test_targets_dir": "../data/test_targets",
     "data_dir": "data",
     "weights_dir": "weights",
     "weights_path": null,
     "predict_dir": "predict",
     "images_dir": "images",
-    
     "norm": true,
     "step": 3,
-    "window": [16, 32, 32],
-
+    "window": [
+        16,
+        32,
+        32
+    ],
     "resume": true,
     "bayesian": true,
     "vnet": true,
@@ -27,13 +28,12 @@
     "kl_alpha": 0,
     "kl_start_epoch": 2,
     "kl_alpha_increase_per_epoch": 0.5,
-
     "epochs": 5,
     "initial_epoch": 0,
     "initial_learning_rate": 0.001,
     "lr_decay_start_epoch": 10,
     "batch_size": 16,
-    "num_gpus": 2,
+    "num_gpus": 1,
     "mc_samples": 48,
     "border_trim": 0.1,
     "lower_percentile": 30,

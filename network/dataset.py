@@ -171,6 +171,7 @@ def save_train_data(train_path, valid_path, train_targets_path,
     valid_targets_files = sorted(absolute_file_paths(orig_valid_targets_dir))
 
     # Loads and preprocesses data.
+    
     train, _, _ = load_data(train_files)
     valid, _, _ = load_data(valid_files)
     train_targets, _, _ = load_data(train_targets_files, norm=False)
@@ -238,7 +239,6 @@ def get_train_data(data_dir):
                                                 train_targets_path,
                                                 valid_targets_path)
     input_shape = train[0].shape
-
     return input_shape, train, valid, train_targets, valid_targets
 
 

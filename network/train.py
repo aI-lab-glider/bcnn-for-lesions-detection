@@ -33,7 +33,6 @@ def train(weights_path, epochs, batch_size, initial_epoch,
     model, checkpoint_path, kl_alpha = get_model(input_shape,
                                         scale_factor=len(train)/batch_size,
                                         weights_path=weights_path)
-
     # Sets callbacks.
     checkpointer = ModelCheckpoint(checkpoint_path, verbose=1,
                                    save_weights_only=True, save_best_only=True)
