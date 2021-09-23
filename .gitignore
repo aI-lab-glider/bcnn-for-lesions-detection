@@ -4,3 +4,6 @@ idata/
 __pycache__/
 **/*.pyc
 **/*.swp
+data/
+nifti/
+.vscode/

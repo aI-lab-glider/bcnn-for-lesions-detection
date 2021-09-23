@@ -57,6 +57,6 @@ class CreateFolderStructure(ChainLink):
             from_paths = [
                 f'{data_from}/{data_prefix}_{i:04d}.npy' for i in rng]
             to_paths = [
-                f'{destination_root}/{data_prefix}_{i:04d}' for i in rng]
+                f'{dir_name}/{data_prefix}_{i:04d}.npy' for i in rng]
             for from_p, to_p in zip(from_paths, to_paths):
                 copyfile(from_p, to_p)

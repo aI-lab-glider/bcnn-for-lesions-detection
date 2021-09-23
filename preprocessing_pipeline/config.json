@@ -1,6 +1,7 @@
 {
     "transform_nifti_to_npy": {
-          "operations": [
+        "is_activated": true,
+        "operations": [
             {
                 "path_from": "/net/scratch/people/plgztabor/LIDC-IDRI/IMAGES",
                 "path_to": "nifti/imgs",
@@ -14,6 +15,7 @@
         ]
     },
     "create_folder_structure": {
+        "is_activated": true,
         "destination_path": "data",
         "imgs_path": "nifti/imgs",
         "targets_path": "nifti/targets",
@@ -25,6 +27,7 @@
         "valid_end": 2
     },
     "create_batches": {
+        "is_activated": true,
         "data_path": "data"
     }
 }
