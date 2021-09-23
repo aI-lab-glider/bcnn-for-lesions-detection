@@ -24,14 +24,38 @@ class CreateFolderStructure(ChainLink):
             copy(to_dirs=[f'{prefix}_targets' for prefix in prefixes],
                  data_from=link_config['targets_path'], data_prefix='MASK')
 
-    def _copy_data(self, destination_root: str, destination_leafs: List[str], data_from: str, data_prefix: str, ranges: List[range]):
+    def _copy_data(self, destination_root: str, destination_subdirs: List[str], data_from: str, data_prefix: str, ranges: List[range]):
+        """
+        Copies .npy files from `data_from` to destination subdirs.
+        Creates the following stucture:
+        `destnation_root`
+           |` destination_subdir[0]/
+           |` destination_subdir[1]/
+           |`...
+            ` destination_subdir[N]/
+        Contet of each destination subdir is specified be ranges.
+
+        :param destination_root: name of directory to which data should be copied 
+        :param destination_subdirs: list of directories to create in `destination_root` and to move data from `data_from` directories.
+        :param data_from: directory from which data should be copied. Assumption is made, that dir have the following structure:
+            `data_from`
+               |` data_prefix_0001.npy
+               |` data_prefix_0002.npy
+               |`...
+                ` data_prefix_N.npy
+
+        :param data_prefix: 'MASK' or 'IMG'.
+        :param ranges: list of ranges of len(destination_subdirs), which defines which elements should be copied        
+        """
         if not os.path.isdir(destination_root):
-              os.mkdir(destination_root)
-        destinations = [f'{destination_root}/{leaf}' for leaf in destination_leafs]
+            os.mkdir(destination_root)
+        destinations = [
+            f'{destination_root}/{leaf}' for leaf in destination_subdirs]
         for dir_name, rng in zip(destinations, ranges):
             if not os.path.isdir(dir_name):
                 os.mkdir(dir_name)
-            from_paths = [f'{data_from}/{data_prefix}_{i:04d}.npy' for i in rng]
+            from_paths = [
+                f'{data_from}/{data_prefix}_{i:04d}.npy' for i in rng]
             to_paths = [
                 f'{destination_root}/{data_prefix}_{i:04d}' for i in rng]
             for from_p, to_p in zip(from_paths, to_paths):

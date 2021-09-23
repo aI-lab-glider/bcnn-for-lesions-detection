@@ -32,10 +32,10 @@ class CreateBatches(ChainLink):
         :param data_path: path to the directory with data divided into train, test and valid subsets: str
         """
         for subset_dir_name in os.listdir(dir_path):
-            self.transform_single_subset_into_batches(
+            self._transform_single_subset_into_batches(
                 dir_path, subset_dir_name)
 
-    def transform_single_subset_into_batches(self, data_path: str, subset_dir_name: str):
+    def _transform_single_subset_into_batches(self, data_path: str, subset_dir_name: str):
         """
         Original data (single CT scan) transformation into numpy array of batches (inplace).
 
@@ -57,7 +57,7 @@ class CreateBatches(ChainLink):
                 data_path, subset_dir_name, f'origin_{file_name}.npy')
             np.save(origin_subset_data_path, origin_subset_data)
 
-    def transform_3d_array_into_batches(self, data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
+    def _transform_3d_array_into_batches(self, data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
         """
         Original data (numpy array) transformation into the array of 3d batches.
         :param data_subset: single subset of data (or labels): np.array
