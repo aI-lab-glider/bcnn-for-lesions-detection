@@ -34,8 +34,11 @@ cd $SLURM_SUBMIT_DIR
 
 srun /bin/hostname
 
-export LD_LIBRARY_PATH=/net/people/plgztabor/cuda/lib64:$LD_LIBRARY_PATH
-module load plgrid/libs/tensorflow-gpu/2.2.0-python-3.7
+
+module load plgrid/tools/python/3.8
+module load plgrid/apps/cuda/11.2
+
 pip3 install -r bcnn/requirements.txt
+
 python3 $1
 
