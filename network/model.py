@@ -3,7 +3,6 @@ import os
 import tensorflow.keras.backend as K
 from tensorflow.keras.losses import binary_crossentropy
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.utils import multi_gpu_model
 
 from bayesian_unet import bayesian_unet
 from bayesian_vnet import bayesian_vnet
@@ -28,7 +27,6 @@ def load_model(input_shape, weights_path, net, prior_std,
                     activation=activation,
                     padding=padding,
                     prior_std=prior_std)
-        model = multi_gpu_model(model, gpus=num_gpus)
 
         # Converts .h5 file to single-gpu.
         model.load_weights(weights_path)
@@ -112,8 +110,6 @@ def get_model(input_shape, weights_dir, resume, bayesian,
     model.summary(line_length=127)
 
     # Converts to multi-gpu model if applicable.
-    if num_gpus > 1:
-        model = multi_gpu_model(model, gpus=num_gpus)
 
     # Sets loss function.
     if bayesian:
