@@ -1,12 +1,12 @@
 import os
 
 import numpy as np
-from sacred import Experiment
 import tensorflow as tf
 import tensorflow.keras.backend as K
+import tensorflow_probability as tfp
+from sacred import Experiment
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
-import tensorflow_probability as tfp
 
 ex = Experiment()
 ex.add_config("configs/config.json")
@@ -68,8 +68,10 @@ def variational_free_energy_loss(model, scale_factor, kl_alpha):
 
     # KL Divergence should be applied once per epoch only, so
     # scale_factor should be num_samples / batch_size.
-    kl = sum(model.losses) / scale_factor
-
+    print(type(scale_factor), type(model), type(model.losses[0]))
+    # TODO Fix here sum(model.losses) / scale_factor
+    kl = scale_factor
+    
     def loss(y_true, y_pred):
         bce = binary_crossentropy(y_true, y_pred)
         return bce + K.get_value(kl_alpha) * kl

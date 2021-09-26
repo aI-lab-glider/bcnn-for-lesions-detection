@@ -1,4 +1,5 @@
 import os
+from typing import Union
 
 import tensorflow.keras.backend as K
 from tensorflow.keras.losses import binary_crossentropy
@@ -10,7 +11,6 @@ from dropout_unet import dropout_unet
 from dropout_vnet import dropout_vnet
 from utils import ex, get_latest_file, variational_free_energy_loss
 
-from typing import Union
 
 @ex.capture
 def load_model(input_shape, weights_path, net, prior_std,
@@ -49,7 +49,7 @@ def load_model(input_shape, weights_path, net, prior_std,
 @ex.capture
 def get_paths(network_type: Union['bayesian', 'dropout', 'ensemble'], weights_path, weights_dir, weights_subdir=None):
     checkpoint_path = (weights_dir + f"/{network_type}/{network_type}" + "-{epoch:02d}"
-    "-{val_acc:.3f}-{val_loss:.0f}.h5")
+    "-{val_accuracy:.3f}-{val_loss:.0f}.h5")
     if not weights_path:
         weights_path = get_latest_file(weights_dir + f"/{weights_subdir or network_type}")
     return checkpoint_path, weights_path 

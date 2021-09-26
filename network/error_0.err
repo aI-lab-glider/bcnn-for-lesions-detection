@@ -51,37 +51,4 @@ INFO - utils - Running command 'train'
 INFO - utils - Started
 /net/software/local/python/3.8/lib/python3.8/site-packages/keras/engine/base_layer.py:2223: UserWarning: `layer.add_variable` is deprecated and will be removed in a future version. Please use `layer.add_weight` method instead.
   warnings.warn('`layer.add_variable` is deprecated and '
-ERROR - utils - Failed after 0:00:50!
-Traceback (most recent calls WITHOUT Sacred internals):
-  File "train.py", line 33, in train
-    model, checkpoint_path, kl_alpha = get_model(input_shape,
-  File "/net/people/plgforobohd/3d-cnn-prometheus/network/model.py", line 120, in get_model
-    loss = variational_free_energy_loss(model, scale_factor, kl_alpha)
-  File "/net/people/plgforobohd/3d-cnn-prometheus/network/utils.py", line 71, in variational_free_energy_loss
-    kl = sum(model.losses) / scale_factor
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/ops/math_ops.py", line 1400, in r_binary_op_wrapper
-    return func(x, y, name=name)
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/util/dispatch.py", line 206, in wrapper
-    return target(*args, **kwargs)
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/ops/math_ops.py", line 1700, in _add_dispatch
-    return gen_math_ops.add_v2(x, y, name=name)
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/ops/gen_math_ops.py", line 459, in add_v2
-    return add_v2_eager_fallback(
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/ops/gen_math_ops.py", line 483, in add_v2_eager_fallback
-    _result = _execute.execute(b"AddV2", 1, inputs=_inputs_flat, attrs=_attrs,
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/eager/execute.py", line 75, in quick_execute
-    raise e
-  File "/net/software/local/python/3.8/lib/python3.8/site-packages/tensorflow/python/eager/execute.py", line 59, in quick_execute
-    tensors = pywrap_tfe.TFE_Py_Execute(ctx._handle, device_name, op_name,
-TypeError: An op outside of the function building code is being passed
-a "Graph" tensor. It is possible to have Graph tensors
-leak out of the function building context by including a
-tf.init_scope in your function building code.
-For example, the following function will fail:
-  @tf.function
-  def has_init_scope():
-    my_constant = tf.constant(1.)
-    with tf.init_scope():
-      added = my_constant * 2
-The graph tensor has name: conv3d_flipout/divergence_kernel:0
-
+INFO - utils - Completed after 0:01:35

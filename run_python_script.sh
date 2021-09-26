@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 ## Nazwa zlecenia
-#SBATCH -J Some_name
+#SBATCH -J Bayesian_Vnet_Training
 
 ## Liczba alokowanych węzłów
 #SBATCH -N 1
