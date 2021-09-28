@@ -1,0 +1,9 @@
+venv/
+idata/
+.idea/
+__pycache__/
+**/*.pyc
+**/*.swp
+data/
+nifti/
+.vscode/
