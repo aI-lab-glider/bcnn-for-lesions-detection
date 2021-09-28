@@ -21,19 +21,19 @@ def load_model(input_shape, weights_path, net, prior_std,
     """
 
     # Loads model as multi-gpu, if possible.
-    try:
-        model = net(input_shape,
-                    kernel_size=kernel_size,
-                    activation=activation,
-                    padding=padding,
-                    prior_std=prior_std)
-
-        # Converts .h5 file to single-gpu.
-        model.load_weights(weights_path)
-        model = model.layers[-2]
-        model.save_weights(weights_path)
-    except ValueError as e:
-        pass
+#    try:
+#        model = net(input_shape,
+#                   kernel_size=kernel_size,
+#                    activation=activation,
+#                    padding=padding,
+#                    prior_std=prior_std)
+#
+#       # Converts .h5 file to single-gpu.
+#        model.load_weights(weights_path)
+#        model = model.layers[-2]
+#        model.save_weights(weights_path)
+#    except ValueError as e:
+#        pass
 
     # Loads single-gpu model.
     model = net(input_shape,
