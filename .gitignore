@@ -6,5 +6,5 @@ __pycache__/
 **/*.swp
 data/
 nifti/
+network/weights/
 .vscode/
-*.h5
