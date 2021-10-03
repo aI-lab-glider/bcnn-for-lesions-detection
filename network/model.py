@@ -49,7 +49,7 @@ def load_model(input_shape, weights_path, net, prior_std,
 @ex.capture
 def get_paths(network_type: Union['bayesian', 'dropout', 'ensemble'], weights_path, weights_dir, weights_subdir=None):
     checkpoint_path = (weights_dir + f"/{network_type}/{network_type}" + "-{epoch:02d}"
-    "-{val_accuracy:.3f}-{val_loss:.0f}.h5")
+    "-{val_acc:.3f}-{val_loss:.0f}.h5")
     if not weights_path:
         weights_path = get_latest_file(weights_dir + f"/{weights_subdir or network_type}")
     return checkpoint_path, weights_path 

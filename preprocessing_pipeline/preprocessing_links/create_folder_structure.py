@@ -28,12 +28,12 @@ class CreateFolderStructure(ChainLink):
         """
         Copies .npy files from `data_from` to destination subdirs.
         Creates the following stucture:
-        `destnation_root`
+        `destination_root`
            |` destination_subdir[0]/
            |` destination_subdir[1]/
            |`...
             ` destination_subdir[N]/
-        Contet of each destination subdir is specified be ranges.
+        Content of each destination subdir is specified be ranges.
 
         :param destination_root: name of directory to which data should be copied 
         :param destination_subdirs: list of directories to create in `destination_root` and to move data from `data_from` directories.
