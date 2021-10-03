@@ -70,7 +70,7 @@ def variational_free_energy_loss(model, scale_factor, kl_alpha):
     # scale_factor should be num_samples / batch_size.
     print(type(scale_factor), type(model), type(model.losses[0]))
     # TODO Fix here sum(model.losses) / scale_factor
-    kl = scale_factor
+    kl = sum(model.losses) / scale_factor
     
     def loss(y_true, y_pred):
         bce = binary_crossentropy(y_true, y_pred)
