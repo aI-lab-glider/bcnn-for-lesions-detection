@@ -1,5 +1,5 @@
 from typing import Dict
-from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
+from chain_link import ChainLink
 import os
 import numpy as np
 
@@ -51,7 +51,6 @@ class CreateBatches(ChainLink):
                 origin_subset_data)
             np.save(subset_data_path, batches_data)
 
-
     def _transform_3d_array_into_batches(self, data_subset: np.array, batch_size: tuple = (32, 32, 16)) -> np.array:
         """
         Original data (numpy array) transformation into the array of 3d batches.
@@ -68,7 +67,7 @@ class CreateBatches(ChainLink):
             for y in range(origin_y // batch_y)[:-1]:
                 for z in range(origin_z // batch_z)[:-1]:
                     batch = data_subset[x * batch_x:(x + 1) * batch_x, y * batch_y:(y + 1) * batch_y,
-                                        z * batch_z:(z + 1) * batch_z]
+                            z * batch_z:(z + 1) * batch_z]
 
                     batches.append(batch)
 

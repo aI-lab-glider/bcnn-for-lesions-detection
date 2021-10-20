@@ -1,5 +1,6 @@
+import random
 from typing import Dict, List
-from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
+from .chain_link import ChainLink
 import os
 from shutil import copyfile
 
@@ -8,55 +9,64 @@ class CreateFolderStructure(ChainLink):
     def run(self, global_config: Dict[str, str]):
         link_config = global_config.get('create_folder_structure', None)
         if self.is_activated(link_config):
-            prefixes = ['train', 'test', 'valid']
-            config_keys = [(f'{prefix}_start', f'{prefix}_end')
-                           for prefix in prefixes]
-            ranges = [range(link_config[from_key], link_config[to_key])
-                      for from_key, to_key in config_keys]
-            destination_path: str = link_config['destination_path']
+            imgs_path = link_config['imgs_path']
+            targets_path = link_config['targets_path']
+            destination_path = link_config['destination_path']
 
-            def copy(to_dirs: List[str], data_from: str, data_prefix: str):
-                self._copy_data(destination_path, to_dirs,
-                                data_from, data_prefix, ranges)
+            imgs_indices = [self._get_img_index(file_name) for file_name in os.listdir(link_config['imgs_path'])]
 
-            copy(to_dirs=prefixes,
-                 data_from=link_config['imgs_path'], data_prefix='IMG')
-            copy(to_dirs=[f'{prefix}_targets' for prefix in prefixes],
-                 data_from=link_config['targets_path'], data_prefix='MASK')
+            if len(imgs_indices) < 3:
+                raise Exception('You need more samples than subsets!')
 
-    def _copy_data(self, destination_root: str, destination_subdirs: List[str], data_from: str, data_prefix: str, ranges: List[range]):
-        """
-        Copies .npy files from `data_from` to destination subdirs.
-        Creates the following stucture:
-        `destination_root`
-           |` destination_subdir[0]/
-           |` destination_subdir[1]/
-           |`...
-            ` destination_subdir[N]/
-        Content of each destination subdir is specified be ranges.
+            subsets = self._split_indices(imgs_indices, link_config)
 
-        :param destination_root: name of directory to which data should be copied 
-        :param destination_subdirs: list of directories to create in `destination_root` and to move data from `data_from` directories.
-        :param data_from: directory from which data should be copied. Assumption is made, that dir have the following structure:
-            `data_from`
-               |` data_prefix_0001.npy
-               |` data_prefix_0002.npy
-               |`...
-                ` data_prefix_N.npy
+            for (subset, indices) in subsets.items():
+                self._copy_data(subset, indices, destination_path, imgs_path, targets_path)
 
-        :param data_prefix: 'MASK' or 'IMG'.
-        :param ranges: list of ranges of len(destination_subdirs), which defines which elements should be copied        
-        """
-        if not os.path.isdir(destination_root):
-            os.mkdir(destination_root)
-        destinations = [
-            f'{destination_root}/{leaf}' for leaf in destination_subdirs]
-        for dir_name, rng in zip(destinations, ranges):
-            if not os.path.isdir(dir_name):
-                os.mkdir(dir_name)
-            from_paths = [
-                f'{data_from}/{data_prefix}_{i:04d}.npy' for i in rng]
-            to_paths = [
-                f'{dir_name}/{data_prefix}_{i:04d}.npy' for i in rng]
-            for from_p, to_p in zip(from_paths, to_paths):
-                copyfile(from_p, to_p)
+    @staticmethod
+    def _split_indices(imgs_indices: List[str], link_config: dict) -> dict:
+        random.shuffle(imgs_indices)
+
+        parts_sum = link_config['train_part'] + link_config['valid_part'] + link_config['test_part']
+
+        valid_part = int(link_config['valid_part'] * len(imgs_indices) / parts_sum)
+        valid_indices_len = valid_part if valid_part > 0 else 1
+
+        test_part = int(link_config['test_part'] * len(imgs_indices) / parts_sum)
+        test_indices_len = test_part if test_part > 0 else 1
+
+        train_indices_len = len(imgs_indices) - valid_indices_len - test_indices_len
+
+        return {
+            'train': imgs_indices[:train_indices_len],
+            'valid': imgs_indices[train_indices_len: train_indices_len + valid_indices_len],
+            'test': imgs_indices[train_indices_len + valid_indices_len:]
+        }
+
+    @staticmethod
+    def _get_img_index(img_file_name):
+        return img_file_name.split('.')[0].split('_')[1]
+
+    @staticmethod
+    def _copy_data(subset, indices, imgs_path, targets_path, destination_path):
+        if not os.path.isdir(destination_path):
+            os.mkdir(destination_path)
+
+        subset_path = os.path.join(destination_path, subset)
+        if not os.path.isdir(subset_path):
+            os.mkdir(subset_path)
+
+        subset_targets_path = os.path.join(destination_path, f'{subset}_targets')
+        if not os.path.isdir(subset_targets_path):
+            os.mkdir(subset_targets_path)
+
+        for idx in indices:
+            img_file_name = f'IMG_{idx}.npy'
+            img_path_src = os.path.join(imgs_path, img_file_name)
+            img_path_dest = os.path.join(subset_path, img_file_name)
+            copyfile(img_path_src, img_path_dest)
+
+            target_file_name = f'MASK_{idx}.npy'
+            target_path_src = os.path.join(targets_path, target_file_name)
+            target_path_dest = os.path.join(subset_targets_path, target_file_name)
+            copyfile(target_path_src, target_path_dest)

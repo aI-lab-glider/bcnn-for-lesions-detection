@@ -1,5 +1,5 @@
 from typing import Dict
-from preprocessing_pipeline.preprocessing_links.chain_link import ChainLink
+from .chain_link import ChainLink
 import os
 import numpy as np
 import nibabel as nib
