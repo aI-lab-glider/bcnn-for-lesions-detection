@@ -13,6 +13,9 @@ class CreateFolderStructure(ChainLink):
             targets_path = link_config['targets_path']
             destination_path = link_config['destination_path']
 
+            if not os.path.exists(destination_path):
+                os.mkdir(destination_path)
+
             imgs_indices = [self._get_img_index(file_name) for file_name in os.listdir(link_config['imgs_path'])]
 
             if len(imgs_indices) < 3:
@@ -21,7 +24,7 @@ class CreateFolderStructure(ChainLink):
             subsets = self._split_indices(imgs_indices, link_config)
 
             for (subset, indices) in subsets.items():
-                self._copy_data(subset, indices, destination_path, imgs_path, targets_path)
+                self._copy_data(subset, indices, imgs_path, targets_path, destination_path)
 
     @staticmethod
     def _split_indices(imgs_indices: List[str], link_config: dict) -> dict:

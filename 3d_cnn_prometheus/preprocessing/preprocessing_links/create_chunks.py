@@ -1,7 +1,9 @@
-from typing import Dict
-from .chain_link import ChainLink
 import os
+from typing import Dict
+
 import numpy as np
+
+from .chain_link import ChainLink
 
 
 class CreateChunks(ChainLink):
@@ -44,6 +46,9 @@ class CreateChunks(ChainLink):
         :param src_dir_path: path to the directory with data divided into train, test and valid subsets: str
         :param dst_dir_path: path to the destination directory for chunks
         """
+        if not os.path.exists(dst_dir_path):
+            os.mkdir(dst_dir_path)
+
         for subset_dir_name in os.listdir(src_dir_path):
             os.mkdir(os.path.join(dst_dir_path, subset_dir_name))
             self._transform_single_subset_into_chunks(src_dir_path, dst_dir_path, subset_dir_name)

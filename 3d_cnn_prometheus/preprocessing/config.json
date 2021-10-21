@@ -14,11 +14,15 @@
             }
         ]
     },
+    "normalize_images": {
+        "is_activated": false,
+        "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES"
+    },
     "create_folder_structure": {
         "is_activated": false,
         "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES",
         "targets_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/MASKS",
-        "destination_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data",
+        "destination_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/input",
         "train_part": 7,
         "valid_part": 2,
         "test_part": 1

@@ -1,13 +1,13 @@
 import json
 
-from preprocessing_links import TransformNiftiToNpy, CreateFolderStructure, CreateChunks
+from preprocessing_links import TransformNiftiToNpy, NormalizeImages, CreateFolderStructure, CreateChunks
 
 
 def preprocess_data():
     with open("config.json") as f:
         config = json.load(f)
 
-    preprocessing_chain = [TransformNiftiToNpy(), CreateFolderStructure(), CreateChunks()]
+    preprocessing_chain = [TransformNiftiToNpy(), NormalizeImages(), CreateFolderStructure(), CreateChunks()]
     for link in preprocessing_chain:
         print(f'🐉 Started {type(link).__name__} ...')
         link.run(config)

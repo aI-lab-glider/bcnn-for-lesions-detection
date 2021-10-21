@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 
 from .utils import absolute_file_paths, ex, standardize
+import tensorflow as tf
 
 
 @ex.capture
@@ -160,34 +161,6 @@ def load_data(files, vnet, batch_size, num_gpus, norm):
 
 
 @ex.capture
-def save_train_data(train_path, valid_path, train_targets_path,
-                    valid_targets_path, orig_train_dir, orig_valid_dir,
-                    orig_train_targets_dir, orig_valid_targets_dir):
-    """Loads, formats, and re-saves train data from original directories."""
-    print('in save_train_data')
-    # Gets original data files.
-    train_files = sorted(absolute_file_paths(orig_train_dir))
-    valid_files = sorted(absolute_file_paths(orig_valid_dir))
-    train_targets_files = sorted(absolute_file_paths(orig_train_targets_dir))
-    valid_targets_files = sorted(absolute_file_paths(orig_valid_targets_dir))
-
-    # Loads and preprocesses data.
-
-    train, _, _ = load_data(train_files)
-    valid, _, _ = load_data(valid_files)
-    train_targets, _, _ = load_data(train_targets_files, norm=False)
-    valid_targets, _, _ = load_data(valid_targets_files, norm=False)
-
-    # Re-saves data in specified directories.
-    np.save(train_path, train)
-    np.save(valid_path, valid)
-    np.save(train_targets_path, train_targets)
-    np.save(valid_targets_path, valid_targets)
-
-    return train, valid, train_targets, valid_targets
-
-
-@ex.capture
 def save_test_data(test_path, test_targets_path, test_coords_path,
                    test_shape_path, orig_test_dir, orig_test_targets_dir):
     """Loads, formats, and re-saves test data from original directories."""
@@ -211,42 +184,69 @@ def save_test_data(test_path, test_targets_path, test_coords_path,
 
 
 @ex.capture
-def get_train_data(data_dir: str) -> tuple:
+def generate_train_data(data_dir: str, batch_size: int):
+    train_data_dir = os.path.join(data_dir, 'train')
+    train_images_names = os.listdir(train_data_dir)
+    batches_num = len(train_images_names) // batch_size
+    train_images_names = train_images_names[:batch_size * batches_num]
+    train_images_batches = np.array_split(train_images_names, batches_num)
+
+    for image_files_names in train_images_batches:
+        images = []
+        targets = []
+
+        for image_file_name in image_files_names:
+            image_path = os.path.join(train_data_dir, image_file_name)
+            target_path = image_path.replace('train', 'train_targets').replace('IMG', 'MASK')
+
+            image = np.load(image_path)
+            image = image.reshape((32, 32, 16, 1))
+            images.append(image)
+
+            target = np.load(target_path)
+            target = target.reshape((32, 32, 16, 1))
+            targets.append(target)
+
+        yield np.asarray(images), np.asarray(targets)
+
+
+@ex.capture
+def generate_valid_data(data_dir: str):
+    valid_data_dir = os.path.join(data_dir, 'valid')
+    for image_file_name in os.listdir(valid_data_dir):
+        image_path = os.path.join(valid_data_dir, image_file_name)
+        target_path = image_path.replace('valid', 'valid_targets').replace('IMG', 'MASK')
+
+        image = np.load(image_path)
+        image = image.reshape((1, 32, 32, 16, 1))
+
+        target = np.load(target_path)
+        target = target.reshape((1, 32, 32, 16, 1))
+
+        yield image, target
+
+
+@ex.capture
+def get_train_data(data_dir: str, batch_size: int) -> tuple:
     """
     Loads training and validation data.
     Transforms data into chunks if format is invalid.
     Raises error if data doesn't exist.
     :param data_dir: path to the directory with data
-    :return: input_shape, train, valid, train_targets, valid_targets
+    :param batch_size: size of batch for train data
+    :return: input_shape, train_ds, valid_ds
     """
-    print('in get_train_data')
-    os.makedirs(data_dir, exist_ok=True)
+    print('In get_train_data')
+    train_ds = tf.data.Dataset.from_generator(generate_train_data, (tf.int64, tf.int64),
+                                              (
+                                                  tf.TensorShape([16, 32, 32, 16, 1]),
+                                                  tf.TensorShape([16, 32, 32, 16, 1])))
 
-    train_path = data_dir + "/train.npy"
-    valid_path = data_dir + "/valid.npy"
-    train_targets_path = data_dir + "/train_targets.npy"
-    valid_targets_path = data_dir + "/valid_targets.npy"
+    valid_ds = tf.data.Dataset.from_generator(generate_valid_data, (tf.int64, tf.int64),
+                                              (tf.TensorShape([1, 32, 32, 16, 1]), tf.TensorShape([1, 32, 32, 16, 1])))
+    input_shape = tuple([dim.value for dim in list(train_ds.element_spec[0].shape)])
 
-    try:
-        # Loads data if possible.
-        train = np.load(train_path)
-        valid = np.load(valid_path)
-        train_targets = np.load(train_targets_path)
-        valid_targets = np.load(valid_targets_path)
-    except (FileNotFoundError, TypeError) as e:
-        if train_path is None or valid_path is None \
-                or train_targets_path is None \
-                or valid_targets_path is None:
-            raise ValueError("No original data for chunking.")
-        else:
-            # Creates data.
-            train, valid, train_targets, \
-            valid_targets = save_train_data(train_path,
-                                            valid_path,
-                                            train_targets_path,
-                                            valid_targets_path)
-    input_shape = train[0].shape
-    return input_shape, train, valid, train_targets, valid_targets
+    return input_shape, train_ds, valid_ds
 
 
 @ex.automain
