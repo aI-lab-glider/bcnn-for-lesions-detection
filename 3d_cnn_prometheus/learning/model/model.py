@@ -30,11 +30,11 @@ def load_model(input_shape, weights_path, net, prior_std,
 def get_paths(network_type: str, weights_path, weights_dir):
     checkpoint_path = (weights_dir + f"/{network_type}/{network_type}" + "-{epoch:02d}"
                                                                          "-{val_acc:.3f}-{val_loss:.0f}.h5")
-    if not weights_path:
-        weights_path = get_latest_file(weights_dir + f"/{network_type}")
-
-    if not os.path.isfile(weights_path):
-        raise Exception(f'Dir with weights {weights_path} does not exist')
+    # if not weights_path:
+    #     weights_path = get_latest_file(weights_dir + f"/{network_type}")
+    #
+    # if not os.path.isfile(weights_path):
+    #     raise Exception(f'Dir with weights {weights_path} does not exist')
 
     return checkpoint_path, weights_path
 
@@ -42,7 +42,7 @@ def get_paths(network_type: str, weights_path, weights_dir):
 @ex.capture
 def get_model(input_shape: tuple, weights_dir: str, resume: bool, prior_std: float, kernel_size: int, activation: str,
               padding: int, kl_alpha: float, kl_start_epoch: int, kl_alpha_increase_per_epoch: float,
-              initial_epoch: int, scale_factor: int = 1):
+              initial_epoch: int, scale_factor: int = 1, weights_path=None):
     """
     Loads or creates model. If a weights path is specified, loads from that path.
     Otherwise, loads the most recently modified model.

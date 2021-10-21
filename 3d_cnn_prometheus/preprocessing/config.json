@@ -15,7 +15,7 @@
         ]
     },
     "create_folder_structure": {
-        "is_activated": true,
+        "is_activated": false,
         "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES",
         "targets_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/MASKS",
         "destination_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data",
@@ -23,8 +23,9 @@
         "valid_part": 2,
         "test_part": 1
     },
-    "create_batches": {
-        "is_activated": false,
-        "data_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/batches"
+    "create_chunks": {
+        "is_activated": true,
+        "src_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/input",
+        "dst_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks"
     }
 }

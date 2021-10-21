@@ -2,6 +2,7 @@ import math
 import os
 
 from tensorflow.keras.callbacks import Callback, LearningRateScheduler, ModelCheckpoint
+import tensorflow as tf
 
 from model.dataset import get_train_data
 from model.model import get_model
@@ -9,6 +10,50 @@ from model.utils import AnnealingCallback, ex
 
 # Ignores TensorFlow CPU messages.
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
+
+def generate_train_data():
+    import numpy as np
+    train_data_dir = '/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks/train'
+    train_images_names = os.listdir(train_data_dir)
+    batches_num = len(train_images_names) // 16
+    train_images_names = train_images_names[:16*batches_num]
+
+    train_images_batches = np.array_split(train_images_names, batches_num)
+
+    for image_files_names in train_images_batches:
+        images = []
+        targets = []
+
+        for image_file_name in image_files_names:
+            image_path = os.path.join(train_data_dir, image_file_name)
+            target_path = image_path.replace('train', 'train_targets').replace('IMG', 'MASK')
+
+            image = np.load(image_path)
+            image = image.reshape((32, 32, 16, 1))
+            images.append(image)
+
+            target = np.load(target_path)
+            target = target.reshape((32, 32, 16, 1))
+            targets.append(target)
+
+        yield np.asarray(images), np.asarray(targets)
+
+
+def generate_valid_data():
+    import numpy as np
+    train_data_dir = '/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks/valid'
+    for image_file_name in os.listdir(train_data_dir):
+        image_path = os.path.join(train_data_dir, image_file_name)
+        target_path = image_path.replace('valid', 'valid_targets').replace('IMG', 'MASK')
+
+        image = np.load(image_path)
+        image = image.reshape((1, 32, 32, 16, 1))
+
+        target = np.load(target_path)
+        target = target.reshape((1, 32, 32, 16, 1))
+
+        yield image, target
 
 
 @ex.capture
@@ -40,11 +85,21 @@ def train(weights_path: str, epochs: int, batch_size: int, initial_epoch: int, k
     """
     print('Loading data...')
     # Loads or creates training data.
-    input_shape, train, valid, train_targets, valid_targets = get_train_data()
+    # input_shape, train, valid, train_targets, valid_targets = get_train_data()
+    # train_len = len(train)
 
+    train_ds = tf.data.Dataset.from_generator(generate_train_data, (tf.int64, tf.int64),
+                                              (tf.TensorShape([16, 32, 32, 16, 1]), tf.TensorShape([16, 32, 32, 16, 1])))
+
+    valid_ds = tf.data.Dataset.from_generator(generate_valid_data, (tf.int64, tf.int64),
+                                              (tf.TensorShape([1, 32, 32, 16, 1]), tf.TensorShape([1, 32, 32, 16, 1])))
+
+    gen = generate_train_data()
+    input_shape = next(gen)[0][0].shape
+    train_len = len(os.listdir('/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks/train'))
     print('Getting the model...')
     # Loads or creates model.
-    model, checkpoint_path, kl_alpha = get_model(input_shape, scale_factor=len(train) / batch_size,
+    model, checkpoint_path, kl_alpha = get_model(input_shape, scale_factor=train_len / batch_size,
                                                  weights_path=weights_path)
 
     # Sets callbacks.
@@ -56,7 +111,17 @@ def train(weights_path: str, epochs: int, batch_size: int, initial_epoch: int, k
 
     print('Fitting the model...')
     # Trains model.
-    model.fit(train, train_targets, batch_size, epochs,
+    model.fit(x=train_ds, epochs=epochs,
               initial_epoch=initial_epoch,
               callbacks=[checkpointer, scheduler, annealer],
-              validation_data=(valid, valid_targets))
+              validation_data=valid_ds,
+              steps_per_epoch=1, validation_steps=1)
+
+    # model.fit(train, train_targets, batch_size, epochs,
+    #           initial_epoch=initial_epoch,
+    #           callbacks=[checkpointer, scheduler, annealer],
+    #           validation_data=(valid, valid_targets))
+
+
+if __name__ == '__main__':
+    train()
