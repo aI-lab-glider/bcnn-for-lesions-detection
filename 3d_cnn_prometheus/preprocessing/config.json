@@ -1,6 +1,6 @@
 {
     "transform_nifti_to_npy": {
-        "is_activated": false,
+        "is_activated": true,
         "operations": [
             {
                 "path_from": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/nifti/IMAGES",
@@ -15,11 +15,11 @@
         ]
     },
     "normalize_images": {
-        "is_activated": false,
+        "is_activated": true,
         "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES"
     },
     "create_folder_structure": {
-        "is_activated": false,
+        "is_activated": true,
         "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES",
         "targets_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/MASKS",
         "destination_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/input",
