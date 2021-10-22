@@ -3,9 +3,11 @@ import os
 
 from tensorflow.keras.callbacks import Callback, LearningRateScheduler, ModelCheckpoint
 
-from .dataset import get_train_data
+from .dataset import get_train_dataset, get_valid_dataset, get_input_shape
+from .experiment_setup import ex
 from .model import get_model
-from .utils import AnnealingCallback, ex
+from .utils import AnnealingCallback
+from .constants import *
 
 # Ignores TensorFlow CPU messages.
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -39,8 +41,11 @@ def train(weights_path: str, epochs: int, batch_size: int, initial_epoch: int, k
     :param kl_alpha_increase_per_epoch: step value to obtain the KL weight for the current epoch (article: k_1)
     """
     print('Loading data...')
-    input_shape, train_ds, valid_ds = get_train_data()
-    train_len = len(os.listdir((os.path.join(data_dir, 'train'))))
+    train_ds = get_train_dataset()
+    valid_ds = get_valid_dataset()
+    input_shape = get_input_shape(train_ds)
+
+    train_len = len(os.listdir((os.path.join(data_dir, TRAIN_DIR))))
 
     print('Getting the model...')
     # Loads or creates model.

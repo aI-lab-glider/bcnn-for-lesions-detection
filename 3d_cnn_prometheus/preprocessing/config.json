@@ -30,6 +30,7 @@
     "create_chunks": {
         "is_activated": true,
         "src_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/input",
-        "dst_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks"
+        "dst_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks",
+        "chunk_size": [32,32,16]
     }
 }

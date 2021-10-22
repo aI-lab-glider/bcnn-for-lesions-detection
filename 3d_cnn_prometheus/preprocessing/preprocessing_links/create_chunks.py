@@ -10,9 +10,10 @@ class CreateChunks(ChainLink):
     def run(self, global_config: Dict[str, str]):
         link_config = global_config.get('create_chunks', None)
         if self.is_activated(link_config):
-            self._create_chunks(link_config['src_dir_path'], link_config['dst_dir_path'])
+            self._create_chunks(link_config['src_dir_path'], link_config['dst_dir_path'],
+                                tuple(link_config['chunk_size']))
 
-    def _create_chunks(self, src_dir_path: str, dst_dir_path: str):
+    def _create_chunks(self, src_dir_path: str, dst_dir_path: str, chunk_size: tuple):
         """
         Original data (CT scans) transformation into numpy arrays of chunks.
         Data directory should be organized as follow:
@@ -45,35 +46,38 @@ class CreateChunks(ChainLink):
 
         :param src_dir_path: path to the directory with data divided into train, test and valid subsets: str
         :param dst_dir_path: path to the destination directory for chunks
+        :param chunk_size: size of 3d chunk (a, b, c) to train the model with them: tuple
         """
         if not os.path.exists(dst_dir_path):
             os.mkdir(dst_dir_path)
 
         for subset_dir_name in os.listdir(src_dir_path):
             os.mkdir(os.path.join(dst_dir_path, subset_dir_name))
-            self._transform_single_subset_into_chunks(src_dir_path, dst_dir_path, subset_dir_name)
+            self._transform_single_subset_into_chunks(src_dir_path, dst_dir_path, subset_dir_name, chunk_size)
 
-    def _transform_single_subset_into_chunks(self, src_dir_path: str, dst_dir_path: str, subset_dir_name: str):
+    def _transform_single_subset_into_chunks(self, src_dir_path: str, dst_dir_path: str, subset_dir_name: str,
+                                             chunk_size: tuple):
         """
         Original data (single CT scan) transformation into numpy array of chunks.
 
         :param src_dir_path: path to the directory with data divided into train, test and valid subsets: str
         :param dst_dir_path: path to the destination directory for chunks
         :param subset_dir_name: name of the data (or label) subset: str
+        :param chunk_size: size of 3d chunk (a, b, c) to train the model with them: tuple
         """
         for file_name in os.listdir(os.path.join(src_dir_path, subset_dir_name)):
             subset_data_path = os.path.join(src_dir_path, subset_dir_name, file_name)
             origin_subset_data = np.load(subset_data_path)
 
             dst_file_prefix = os.path.join(dst_dir_path, subset_dir_name, file_name).split('.')[0]
-            self._transform_3d_array_into_chunks(dst_file_prefix, origin_subset_data)
+            self._transform_3d_array_into_chunks(dst_file_prefix, origin_subset_data, chunk_size)
 
     def _transform_3d_array_into_chunks(self, dst_file_prefix: str, data_subset: np.array,
                                         chunk_size: tuple = (32, 32, 16)):
         """
         Original data (numpy array) transformation into the array of 3d chunks.
         :param data_subset: single subset of data (or labels): np.array
-        :param chunk_size: size of 3d chunk (size: a, b, c) to train the model with them: tuple
+        :param chunk_size: size of 3d chunk (a, b, c) to train the model with them: tuple
         """
         origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size

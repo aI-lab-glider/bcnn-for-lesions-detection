@@ -1,5 +1,5 @@
 from model.train import train
-from model.utils import ex
+from model.train import ex
 
 
 @ex.automain
