@@ -6,16 +6,16 @@ from utils import absolute_file_paths, ex, round_down, standardize
 
 
 @ex.capture
-def chunks(arr, batch_size, num_gpus, step, window, trim=True):
+def chunks(arr, batch_size, num_gpus, step, chunk_size, trim=True):
     """Chunks a 4D numpy array into smaller 4D arrays."""
 
-    new = []
+    size = []
     coords = []
     shape = arr.shape
 
-    z_max = shape[0] - window[0]
-    x_max = shape[1] - window[1]
-    y_max = shape[2] - window[2]
+    z_max = shape[0] - chunk_size[0]
+    x_max = shape[1] - chunk_size[1]
+    y_max = shape[2] - chunk_size[2]
 
     if z_max < 0 or x_max < 0 or y_max < 0:
         raise ValueError("Volume is too small for the given chunk size.")
@@ -23,51 +23,51 @@ def chunks(arr, batch_size, num_gpus, step, window, trim=True):
     z_flag = x_flag = y_flag = False
 
     # Creates chunks via a sliding rectangular prism window.
-    for z in range(0, shape[0], int(window[0] // step)):
+    for z in range(0, shape[0], int(chunk_size[0] // step)):
         x_flag = y_flag = False
 
         if z_flag:
             break
         elif z > z_max:
-            if z_max == 0 or z_max % int(window[0] // step) == 0:
+            if z_max == 0 or z_max % int(chunk_size[0] // step) == 0:
                 break
             z = z_max
             z_flag = True
 
-        for x in range(0, shape[1], int(window[1] // step)):
+        for x in range(0, shape[1], int(chunk_size[1] // step)):
             y_flag = False
 
             if x_flag:
                 break
             elif x > x_max:
-                if x_max == 0 or x_max % int(window[1] // step) == 0:
+                if x_max == 0 or x_max % int(chunk_size[1] // step) == 0:
                     break
                 x = x_max
                 x_flag = True
 
-            for y in range(0, shape[2], int(window[2] // step)):
+            for y in range(0, shape[2], int(chunk_size[2] // step)):
                 if y_flag:
                     break
                 elif y > y_max:
-                    if y_max == 0 or y_max % int(window[2] // step) == 0:
+                    if y_max == 0 or y_max % int(chunk_size[2] // step) == 0:
                         break
                     y = y_max
                     y_flag = True
 
                 coords.append((z, x, y))
-                new.append(arr[z:z+window[0],
-                               x:x+window[1],
-                               y:y+window[2], :])
-    new = np.asarray(new)
+                size.append(arr[z:z + chunk_size[0],
+                               x:x + chunk_size[1],
+                               y:y + chunk_size[2], :])
+    size = np.asarray(size)
 
     # Avoids https://github.com/keras-team/keras/issues/11434
     if trim:
-        last_batch_gpus = (new.shape[0] % batch_size) % num_gpus
+        last_batch_gpus = (size.shape[0] % batch_size) % num_gpus
         if last_batch_gpus != 0:
-            new = new[:-last_batch_gpus, :, :, :, :]
+            size = size[:-last_batch_gpus, :, :, :, :]
             coords = coords[:-last_batch_gpus]
 
-    return new, coords, shape
+    return size, coords, shape
 
 @ex.capture
 def reconstruct(arr, coords, shape, window):

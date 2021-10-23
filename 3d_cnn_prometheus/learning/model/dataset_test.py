@@ -8,68 +8,38 @@ from .utils import absolute_file_paths, standardize
 
 
 @ex.capture
-def create_chunks(arr, batch_size, num_gpus, step, window, trim=True):
+def create_chunks(arr: np.ndarray, batch_size: int, num_gpus: int, step: int, chunk_size: list, trim: bool = True):
     """Chunks a 4D numpy array into smaller 4D arrays."""
 
-    new = []
+    chunks = []
     coords = []
-    shape = arr.shape
 
-    z_max = shape[0] - window[0]
-    x_max = shape[1] - window[1]
-    y_max = shape[2] - window[2]
+    if len(chunk_size) != 3 or len(arr.shape) != 3:
+        raise ValueError("Wrong dimensions!")
+    
+    z_size, x_size, y_size = chunk_size
+    z_max, x_max, y_max = np.asarray(arr.shape) - chunk_size
 
     if z_max < 0 or x_max < 0 or y_max < 0:
         raise ValueError("Volume is too small for the given chunk size.")
 
-    z_flag = x_flag = y_flag = False
-
-    # Creates chunks via a sliding rectangular prism window.
-    for z in range(0, shape[0], int(window[0] // step)):
-        x_flag = y_flag = False
-
-        if z_flag:
-            break
-        elif z > z_max:
-            if z_max == 0 or z_max % int(window[0] // step) == 0:
-                break
-            z = z_max
-            z_flag = True
-
-        for x in range(0, shape[1], int(window[1] // step)):
-            y_flag = False
-
-            if x_flag:
-                break
-            elif x > x_max:
-                if x_max == 0 or x_max % int(window[1] // step) == 0:
-                    break
-                x = x_max
-                x_flag = True
-
-            for y in range(0, shape[2], int(window[2] // step)):
-                if y_flag:
-                    break
-                elif y > y_max:
-                    if y_max == 0 or y_max % int(window[2] // step) == 0:
-                        break
-                    y = y_max
-                    y_flag = True
-
+    for z in range(0, z_max, z_size // step):
+        for x in range(0, x_max, x_size // step):
+            for y in range(0, y_max, y_size // step):
                 coords.append((z, x, y))
-                new.append(arr[z:z + window[0],
-                           x:x + window[1],
-                           y:y + window[2], :])
-    new = np.asarray(new)
+                chunks.append(arr[z:z + z_size, x:x + x_size, y:y + y_size, :])
+
+
+    chunks = np.asarray(chunks)
 
     # Avoids https://github.com/keras-team/keras/issues/11434
     if trim:
-        last_batch_gpus = (new.shape[0] % batch_size) % num_gpus
+        last_batch_gpus = (chunks.shape[0] % batch_size) % num_gpus
         if last_batch_gpus != 0:
-            new = new[:-last_batch_gpus, :, :, :, :]
+            chunks = chunks[:-last_batch_gpus, :, :, :, :]
             coords = coords[:-last_batch_gpus]
 
-    return new, coords, shape
+    return chunks, coords, arr.shape
 
 
 @ex.capture
