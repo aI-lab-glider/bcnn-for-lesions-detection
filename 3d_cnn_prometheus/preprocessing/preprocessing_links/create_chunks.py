@@ -49,12 +49,11 @@ class CreateChunks(ChainLink):
         :param chunk_size: size of 3d chunk (a, b, c) to train the model with them: tuple
         """
         if not os.path.exists(dst_dir_path):
-            os.mkdir(dst_dir_path)
+            os.makedirs(dst_dir_path)
 
         for subset_dir_name in os.listdir(src_dir_path):
-            os.mkdir(os.path.join(dst_dir_path, subset_dir_name))
+            os.makedirs(os.path.join(dst_dir_path, subset_dir_name), exist_ok=True)
             self._transform_single_subset_into_chunks(src_dir_path, dst_dir_path, subset_dir_name, chunk_size)
-
 
     def _transform_single_subset_into_chunks(self, src_dir_path: str, dst_dir_path: str, subset_dir_name: str,
                                              chunk_size: tuple):
@@ -73,7 +72,6 @@ class CreateChunks(ChainLink):
             dst_file_prefix = os.path.join(dst_dir_path, subset_dir_name, file_name).split('.')[0]
             self._transform_3d_array_into_chunks(dst_file_prefix, origin_subset_data, chunk_size)
 
-
     def _transform_3d_array_into_chunks(self, dst_file_prefix: str, data_subset: np.array,
                                         chunk_size: tuple = (32, 32, 16)):
         """
@@ -87,6 +85,6 @@ class CreateChunks(ChainLink):
         for x in range(0, origin_x, chunk_x)[:-1]:
             for y in range(0, origin_y, chunk_y)[:-1]:
                 for z in range(0, origin_z, chunk_z)[:-1]:
-                    chunk = data_subset[x:x+chunk_x, y:y+chunk_y, z:z+chunk_z]
+                    chunk = data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
                     chunk_path = f'{dst_file_prefix}_{x // chunk_x}_{y // chunk_y}_{z // chunk_z}.npy'
                     np.save(chunk_path, chunk)
