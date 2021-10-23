@@ -30,7 +30,7 @@ def schedule(epoch: int, initial_learning_rate: float, lr_decay_start_epoch: int
 
 @ex.capture
 def train(weights_path: str, epochs: int, batch_size: int, initial_epoch: int, kl_start_epoch: int,
-          kl_alpha_increase_per_epoch: float, data_dir: str) -> None:
+          kl_alpha_increase_per_epoch: float) -> None:
     """
     Trains a model.
     :param weights_path: path to save updated weights (or path to trained before weights if they exist)
@@ -45,7 +45,7 @@ def train(weights_path: str, epochs: int, batch_size: int, initial_epoch: int, k
     valid_ds = get_valid_dataset()
     input_shape = get_input_shape(train_ds)
 
-    train_len = len(os.listdir((os.path.join(data_dir, TRAIN_DIR))))
+    train_len = len(os.listdir(CHUNKS_TRAIN_PATH))
 
     print('Getting the model...')
     # Loads or creates model.
