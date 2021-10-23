@@ -55,6 +55,7 @@ class CreateChunks(ChainLink):
             os.mkdir(os.path.join(dst_dir_path, subset_dir_name))
             self._transform_single_subset_into_chunks(src_dir_path, dst_dir_path, subset_dir_name, chunk_size)
 
+
     def _transform_single_subset_into_chunks(self, src_dir_path: str, dst_dir_path: str, subset_dir_name: str,
                                              chunk_size: tuple):
         """
@@ -72,6 +73,7 @@ class CreateChunks(ChainLink):
             dst_file_prefix = os.path.join(dst_dir_path, subset_dir_name, file_name).split('.')[0]
             self._transform_3d_array_into_chunks(dst_file_prefix, origin_subset_data, chunk_size)
 
+
     def _transform_3d_array_into_chunks(self, dst_file_prefix: str, data_subset: np.array,
                                         chunk_size: tuple = (32, 32, 16)):
         """
@@ -82,11 +84,9 @@ class CreateChunks(ChainLink):
         origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size
 
-        for x in range(origin_x // chunk_x)[:-1]:
-            for y in range(origin_y // chunk_y)[:-1]:
-                for z in range(origin_z // chunk_z)[:-1]:
-                    chunk = data_subset[x * chunk_x:(x + 1) * chunk_x, y * chunk_y:(y + 1) * chunk_y,
-                            z * chunk_z:(z + 1) * chunk_z]
-
-                    chunk_path = f'{dst_file_prefix}_{x * chunk_x}_{y * chunk_y}_{z * chunk_z}.npy'
+        for x in range(0, origin_x, chunk_x)[:-1]:
+            for y in range(0, origin_y, chunk_y)[:-1]:
+                for z in range(0, origin_z, chunk_z)[:-1]:
+                    chunk = data_subset[x:x+chunk_x, y:y+chunk_y, z:z+chunk_z]
+                    chunk_path = f'{dst_file_prefix}_{x // chunk_x}_{y // chunk_y}_{z // chunk_z}.npy'
                     np.save(chunk_path, chunk)
