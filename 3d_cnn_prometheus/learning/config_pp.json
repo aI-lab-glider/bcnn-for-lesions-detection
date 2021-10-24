@@ -1,0 +1,37 @@
+{
+    "transform_nifti_to_npy": {
+        "is_activated": true,
+        "path_from": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/nifti/",
+        "operations": [
+            {
+                "path_from": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/nifti/IMAGES",
+                "path_to": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES",
+                "amount": 5
+            },
+            {
+                "path_from": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/nifti/MASKS",
+                "path_to": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/MASKS",
+                "amount": 5
+            }
+        ]
+    },
+    "normalize_images": {
+        "is_activated": true,
+        "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES"
+    },
+    "create_folder_structure": {
+        "is_activated": true,
+        "imgs_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/IMAGES",
+        "targets_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/npy/MASKS",
+        "destination_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/input",
+        "train_part": 7,
+        "valid_part": 2,
+        "test_part": 1
+    },
+    "create_chunks": {
+        "is_activated": true,
+        "src_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/input",
+        "dst_dir_path": "/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/data/chunks",
+        "chunk_size": [32,32,16]
+    }
+}
