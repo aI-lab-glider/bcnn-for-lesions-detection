@@ -7,9 +7,9 @@
     "norm": true,
     "step": 3,
     "chunk_size": [
-        16,
         32,
-        32
+        32,
+        16
     ],
     "resume": true,
     "bayesian": true,
