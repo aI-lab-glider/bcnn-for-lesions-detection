@@ -1,0 +1,54 @@
+{
+  "preprocessing": {
+    "transform_nifti_to_npy": {
+      "is_activated": true
+    },
+    "normalize_images": {
+      "is_activated": true
+    },
+    "create_data_structure": {
+      "train_part": 7,
+      "valid_part": 2,
+      "test_part": 1
+    },
+    "create_chunks": {
+      "is_activated": true,
+      "chunk_size": [
+        32,
+        32,
+        16
+      ]
+    }
+  },
+  "weights_dir": "weights",
+  "weights_path": null,
+  "predict_dir": "predict",
+  "images_dir": "images",
+  "norm": true,
+  "step": 3,
+  "resume": true,
+  "bayesian": true,
+  "vnet": true,
+  "prior_std": 1,
+  "kernel_size": 3,
+  "activation": "relu",
+  "padding": "SAME",
+  "kl_alpha": 0,
+  "kl_start_epoch": 2,
+  "kl_alpha_increase_per_epoch": 0.5,
+  "epochs": 1,
+  "initial_epoch": 0,
+  "initial_learning_rate": 0.001,
+  "lr_decay_start_epoch": 10,
+  "batch_size": 16,
+  "num_gpus": 1,
+  "mc_samples": 48,
+  "border_trim": 0.1,
+  "lower_percentile": 30,
+  "upper_percentile": 70,
+  "chunk_size": [
+    32,
+    32,
+    16
+  ]
+}
