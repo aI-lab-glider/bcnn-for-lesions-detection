@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Generator
 
 import numpy as np
 
@@ -6,18 +6,26 @@ from .chain_link import ChainLink
 
 
 class CreateChunks(ChainLink):
-    def run(self, global_config: Dict[str, str], array: np.array):
+    def run(self, global_config: Dict[str, str], array: np.array) -> Generator:
+        """
+        Creates generator to transform original data into chunks.
+        :param global_config: preprocessing config
+        :param array: image or target from the original data
+        :return: generator that produces chunks
+        """
         link_config = global_config.get('create_chunks', None)
         if self.is_activated(link_config):
             chunk_size = tuple(link_config['chunk_size'])
-            return self._create_chunks(array, chunk_size)
+            chunk_generator = self._create_chunks(array, chunk_size)
+            return chunk_generator
 
     @staticmethod
-    def _create_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16)):
+    def _create_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16)) -> np.array:
         """
-        Original data (numpy array) transformation into the array of 3d chunks.
-        :param data_subset: single subset of data (or labels): np.array
-        :param chunk_size: size of 3d chunk (a, b, c) to train the model with them: tuple
+        Generates chunks from the original data (numpy array).
+        :param data_subset: single subset of data (or labels)
+        :param chunk_size: size of 3d chunk (a, b, c) to train the model with them
+        :return: chunk, np.array with size (a, b, c)
         """
         origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size
