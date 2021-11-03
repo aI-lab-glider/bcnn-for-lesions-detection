@@ -3,6 +3,7 @@
     "transform_nifti_to_npy": {
       "is_activated": true
     },
+    "update_healthy_patients_indices": true,
     "normalize_images": {
       "is_activated": true
     },
