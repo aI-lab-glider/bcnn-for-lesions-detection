@@ -20,12 +20,12 @@ class CreateChunks(ChainLink):
             return chunk_generator
 
     @staticmethod
-    def _create_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16)) -> np.array:
+    def _create_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16)) -> Generator:
         """
         Generates chunks from the original data (numpy array).
         :param data_subset: single subset of data (or labels)
         :param chunk_size: size of 3d chunk (a, b, c) to train the model with them
-        :return: chunk, np.array with size (a, b, c)
+        :return: generator which produces chunks with size (a, b, c)
         """
         origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size
