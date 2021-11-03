@@ -7,7 +7,7 @@ import tensorflow_probability as tfp
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
 
-from .experiment_setup import ex
+from bayesian_cnn_prometheus.learning.model.experiment_setup import ex
 
 
 def round_down(num, factor):

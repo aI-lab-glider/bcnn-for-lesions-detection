@@ -3,8 +3,9 @@ import os
 import tensorflow.keras.backend as K
 from tensorflow.keras.optimizers import Adam
 
-from .bayesian_vnet import bayesian_vnet
-from .utils import ex, variational_free_energy_loss, get_latest_file
+from bayesian_cnn_prometheus.learning.model.bayesian_vnet import bayesian_vnet
+from bayesian_cnn_prometheus.learning.model.experiment_setup import ex
+from bayesian_cnn_prometheus.learning.model.utils import variational_free_energy_loss
 
 
 @ex.capture

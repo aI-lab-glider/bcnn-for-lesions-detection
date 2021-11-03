@@ -3,11 +3,10 @@ import os
 
 from tensorflow.keras.callbacks import Callback, LearningRateScheduler, ModelCheckpoint
 
-from .dataset import get_train_dataset, get_valid_dataset, get_input_shape
-from .experiment_setup import ex
-from .model import get_model
-from .utils import AnnealingCallback
-from .constants import *
+from bayesian_cnn_prometheus.learning.model.dataset import get_train_dataset, get_valid_dataset, get_input_shape
+from bayesian_cnn_prometheus.learning.model.experiment_setup import ex
+from bayesian_cnn_prometheus.learning.model.model import get_model
+from bayesian_cnn_prometheus.learning.model.utils import AnnealingCallback
 
 # Ignores TensorFlow CPU messages.
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -45,7 +44,8 @@ def train(weights_path: str, epochs: int, batch_size: int, initial_epoch: int, k
     valid_ds = get_valid_dataset()
     input_shape = get_input_shape(train_ds)
 
-    train_len = len(os.listdir(CHUNKS_TRAIN_PATH))
+    # TODO How can we calc train len?
+    train_len = 100
 
     print('Getting the model...')
     # Loads or creates model.

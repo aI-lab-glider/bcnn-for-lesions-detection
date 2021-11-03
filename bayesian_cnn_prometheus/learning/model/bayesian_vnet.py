@@ -1,9 +1,9 @@
+import tensorflow_probability as tfp
 from tensorflow.keras.layers import Input, Conv3D, MaxPooling3D, UpSampling3D, concatenate
 from tensorflow.keras.models import Model
-import tensorflow_probability as tfp
 
-from .groupnorm import GroupNormalization
-from .utils import normal_prior
+from bayesian_cnn_prometheus.learning.model.groupnorm import GroupNormalization
+from bayesian_cnn_prometheus.learning.model.utils import normal_prior
 
 
 def down_stage(inputs, filters, kernel_size=3,
