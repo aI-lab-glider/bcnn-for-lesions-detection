@@ -60,16 +60,24 @@ class PreprocessingPipeline:
             healthy_patients_indices_json = json.load(hf)
 
         if self.config['update_healthy_patients_indices']:
-            masks_paths = glob.glob(os.path.join(DATA_DIR, MASKS_DIR, f'MASK_*'))
-            healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
-            healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
-            healthy_patients_indices_json['healthy_patients_indices'] = healthy_patients_indices
+            healthy_patients_indices = self._find_healthy_patients_indices()
 
+            healthy_patients_indices_json['healthy_patients_indices'] = healthy_patients_indices
             with open(healthy_patients_indices_json_path, 'w') as hf:
                 json.dump(healthy_patients_indices_json, hf)
         else:
             healthy_patients_indices = healthy_patients_indices_json['healthy_patients_indices']
 
+        return healthy_patients_indices
+
+    def _find_healthy_patients_indices(self) -> List[str]:
+        """
+        Finds indices of healthy patients scans in dataset.
+        :return: list of indices
+        """
+        masks_paths = glob.glob(os.path.join(DATA_DIR, MASKS_DIR, f'MASK_*'))
+        healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
+        healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
 
     @staticmethod
