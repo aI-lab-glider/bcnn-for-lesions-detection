@@ -8,7 +8,7 @@ from bayesian_cnn_prometheus.learning.model.experiment_setup import ex
 from bayesian_cnn_prometheus.preprocessing.data_generator import DataGenerator
 
 # TODO Refactor this tmp solution
-with open('./config.json') as cf:
+with open(CONFIG_PATH) as cf:
     config = json.load(cf)
     preprocessing_pipeline = DataGenerator(config)
 

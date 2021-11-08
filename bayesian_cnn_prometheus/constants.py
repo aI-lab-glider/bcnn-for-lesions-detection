@@ -1,6 +1,8 @@
 from pathlib import Path
 
-DATA_DIR = Path('PATH_TO_DIR_WITH_IMAGES_AND_REFERENCE_SEGMENTATIONS_DIRS')
+PROJECT_DIR = Path.cwd().parent
+DATA_DIR = PROJECT_DIR / "data"
+CONFIG_PATH = PROJECT_DIR / 'config.json'
 
 
 class DatasetType:
