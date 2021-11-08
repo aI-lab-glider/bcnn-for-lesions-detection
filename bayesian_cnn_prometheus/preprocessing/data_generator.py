@@ -1,4 +1,5 @@
-from typing import Dict, Generator
+import functools
+from typing import Dict
 
 import numpy as np
 
@@ -20,7 +21,7 @@ class DataGenerator:
         self.chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
         self.data_splitter = DataSplitter(preprocessing_config.get('create_data_structure'),
                                           preprocessing_config.get('update_healthy_patients_indices'))
-        self.dataset_structure = self.data_splitter.split_indices()
+        self.dataset_structure = None
 
     def get_train(self):
         return self._get_data_generator(DatasetType.TRAIN, self.batch_size)
@@ -31,7 +32,12 @@ class DataGenerator:
     def get_valid(self):
         return self._get_data_generator(DatasetType.VALID, 1)
 
-    def _get_data_generator(self, dataset_type: DatasetType, batch_size: int = 1) -> Generator:
+    def _get_data_generator(self, dataset_type: DatasetType, batch_size: int = 1):
+        if self.dataset_structure is None:
+            self.dataset_structure = self.data_splitter.split_indices()
+        return functools.partial(self._generate_data, dataset_type, batch_size)
+
+    def _generate_data(self, dataset_type: DatasetType, batch_size: int = 1):
         """
         Creates a generator that produces arrays with chunks ready for training.
         :param dataset_type: type of dataset (train, test, valid)
