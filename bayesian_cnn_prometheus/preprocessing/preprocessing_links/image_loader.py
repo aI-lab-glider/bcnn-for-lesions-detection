@@ -1,32 +1,35 @@
 import os
-from typing import Dict, Tuple
+from typing import Tuple
 
 import nibabel as nib
 import numpy as np
 
 from bayesian_cnn_prometheus.constants import DATA_DIR, IMAGES_DIR, REFERENCE_SEGMENTATIONS_DIR
-from bayesian_cnn_prometheus.preprocessing.preprocessing_links.chain_link import ChainLink
 
 
-class TransformNiftiToNpy(ChainLink):
-    def run(self, global_config: Dict[str, str], image_index: str) -> Tuple[np.array, np.array]:
+# EXP: If it loads, it's not a transformator!
+class ImageLoader:
+
+    def __init__(self, ext: str = 'nii.gz'):
+        self.extension = ext
+
+    def load(self, image_index: str) -> Tuple[np.array, np.array]:
+        # TODO ProxPxD: description
         """
         Transforms image and target with image_index from nifti format into numpy array.
         :param global_config: preprocessing config
         :param image_index: index of image to be transformed
         :return: image and target as numpy arrays
         """
-        link_config = global_config.get('transform_nifti_to_npy', None)
-
-        if self.is_activated(link_config):
-            image_file_path, target_file_path = self._get_files_names(image_index, 'nii.gz')
+        image_file_path, target_file_path = self._get_files_names(image_index, 'nii.gz')
+        if self.extension == 'ni.gz':
             npy_image = self._transform_nifti_to_npy(image_file_path)
             npy_target = self._transform_nifti_to_npy(target_file_path)
-        else:
-            image_file_path, target_file_path = self._get_files_names(image_index, 'npy')
+        elif self.extension == 'npy':
             npy_image = np.load(image_file_path)
             npy_target = np.load(target_file_path)
-
+        else:
+            raise Exception("Not supported extension")
         return npy_image, npy_target
 
     @staticmethod

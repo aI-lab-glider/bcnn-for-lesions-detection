@@ -1,7 +1,7 @@
 {
   "preprocessing": {
     "transform_nifti_to_npy": {
-      "is_activated": true
+      "ext": "ni.gz"
     },
     "update_healthy_patients_indices": true,
     "normalize_images": {

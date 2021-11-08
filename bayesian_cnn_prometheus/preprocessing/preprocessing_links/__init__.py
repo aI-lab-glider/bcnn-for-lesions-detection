@@ -1,4 +1,3 @@
-from .create_chunks import CreateChunks
-from .transform_nifti_to_npy import TransformNiftiToNpy
-from .normalize_images import NormalizeImages
-from .chain_link import ChainLink
+from .chunks_creator import ChunksGenerator
+from .image_loader import ImageLoader
+from .image_normalizer import ImageNormalizer
