@@ -1,13 +1,12 @@
 import glob
 import json
-import os
 from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
 
 import bayesian_cnn_prometheus
-from bayesian_cnn_prometheus.constants import DatasetType, DATA_DIR, MASKS_DIR
+from bayesian_cnn_prometheus.constants import DatasetType, Paths
 
 
 class DataSplitter:
@@ -51,6 +50,8 @@ class DataSplitter:
         Uses healthy_patient_indices.json file as a cache.
         :return: list of patients indices
         """
+
+        # ProxPxD idea: a file of paths that are being used in preprocessing module
         healthy_patients_indices_json_path = Path(
             bayesian_cnn_prometheus.preprocessing.__file__).parent / 'healthy_patients_indices.json'
         with open(healthy_patients_indices_json_path, 'r') as hf:
@@ -72,7 +73,7 @@ class DataSplitter:
         Finds indices of healthy patients scans in dataset.
         :return: list of indices
         """
-        masks_paths = glob.glob(os.path.join(DATA_DIR, MASKS_DIR, f'MASK_*'))
+        masks_paths = glob.glob(Paths.MASKS_PATH / Paths.MASK_FILE_PATTERN)
         healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
         healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
