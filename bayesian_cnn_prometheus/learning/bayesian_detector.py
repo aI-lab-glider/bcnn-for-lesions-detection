@@ -17,9 +17,9 @@ class BayesianDetector:
         self._train_len: int = None
         self._model = None
 
-        self._train = None
-        self._valid = None
-        self._test = None
+        self._train_data = None
+        self._valid_data = None
+        self._test_data = None
 
         # For creating a model
         self._kernel_size = config.get('kernel_size')
@@ -42,7 +42,7 @@ class BayesianDetector:
         self._kl_alpha_increase_per_epoch: float = config.get('kl_alpha_increase_per_epoch')
 
         # For fitting
-        self._train_ds = config.get('train_ds')
+        self._lr_decay_start_epoch = config.get('lr_decay_start_epoch')
         self._epochs = config.get('epochs')
         self._initial_epoch = config.get('initial_epoch')
         self._valid_ds = config.get('valid_ds')
@@ -55,14 +55,16 @@ class BayesianDetector:
         return K.variable(kl_alpha)
 
     def put_train_data(self, train_data):  # TODO think if is it the right way
-        self._train = train_data
+        self._train_data = train_data
         self._input_shape = BayesianDetector.get_input_shape(train_data)
+        self._train_len = self._calculate_train_len()
+
+    def put_valid_data(self, valid_data):  # TODO think if is it the right way
+        self._valid_data = valid_data
 
     def create_model(self):
         self._initialize_model()
         self._initialize_callbacks()
-        # self._input_shape = DataLoader.get_input_shape(self._train_data)
-        # self._train_len = self._calculate_train_len()
 
     def _initialize_model(self):
         self._model = bayesian_vnet(self._input_shape, kernel_size=self._kernel_size, activation=self._activation,
@@ -75,7 +77,7 @@ class BayesianDetector:
         self._checkpoint_path = BayesianDetector.get_paths('bayesian', self._weights_dir)  # TODO ProxPxD Refactor
         self._checkpointer = ModelCheckpoint(self._checkpoint_path, verbose=1, save_weights_only=True,
                                              save_best_only=True, )
-        self._scheduler = LearningRateScheduler(BayesianDetector._schedule)
+        self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
         self._annealer = Callback() if self._kl_alpha is None else AnnealingCallback(self._kl_alpha,
                                                                                      self._kl_start_epoch,
                                                                                      self._kl_alpha_increase_per_epoch)
@@ -87,7 +89,7 @@ class BayesianDetector:
         return checkpoint_path
 
     @staticmethod
-    def _schedule(epoch: int, initial_learning_rate: float, lr_decay_start_epoch: int) -> float:
+    def _get_scheduler(lr_decay_start_epoch: int) -> float:
         """
         Defines exponentially decaying learning rate.
         :param epoch: actual epoch number
@@ -95,16 +97,20 @@ class BayesianDetector:
         :param lr_decay_start_epoch: epoch number since the learning rate is decaying
         :return: updated value of the learning rate
         """
-        if lr_decay_start_epoch <= epoch:
-            initial_learning_rate *= math.exp((10 * initial_learning_rate) * (lr_decay_start_epoch - epoch))
-        return initial_learning_rate
+
+        def schedule(epoch: int, initial_learning_rate: float):
+            if epoch >= lr_decay_start_epoch:
+                initial_learning_rate *= math.exp((10 * initial_learning_rate) * (lr_decay_start_epoch - epoch))
+            return initial_learning_rate
+
+        return schedule
 
     def fit(self):
         print('Fitting the model...')
-        self._model.fit(x=self._train_ds, epochs=self._epochs,
+        self._model.fit(x=self._train_data, epochs=self._epochs,
                         initial_epoch=self._initial_epoch,
                         callbacks=[self._checkpointer, self._scheduler, self._annealer],
-                        validation_data=self._valid_ds,
+                        validation_data=self._valid_data,
                         steps_per_epoch=1, validation_steps=1)
 
     @staticmethod

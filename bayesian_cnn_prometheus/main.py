@@ -17,8 +17,9 @@ def main():
 
     detector = BayesianDetector(config)
     detector.put_train_data(data_loader.get_train_data())
+    detector.put_valid_data(data_loader.get_valid_data())
     detector.create_model()
-    # detector.fit()
+    detector.fit()
 
 
 def get_config():
