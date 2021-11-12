@@ -11,16 +11,33 @@ class DataLoader:
         self.batch_size = batch_size
         self.chunk_size = chunk_size
         self.data_generator = DataGenerator(preprocessing_config, batch_size)
+        self._train_data = None
+        self._test_data = None
+        self._valid_data = None
 
-    def get_train(self) -> tf.data.Dataset:
+    def load_data(self):
+        self._train_data = self._create_train_data()
+        self._test_data = self._create_test_data()
+        self._valid_data = self._create_valid_data()
+
+    def get_train_data(self):
+        return self._train_data
+
+    def get_test_data(self):
+        return self._test_data
+
+    def get_valid_data(self):
+        return self._valid_data
+
+    def _create_train_data(self) -> tf.data.Dataset:
         generator = self.data_generator.get_train()
         return self._get_data_from_generator(generator)
 
-    def get_test(self) -> tf.data.Dataset:
+    def _create_test_data(self) -> tf.data.Dataset:
         generator = self.data_generator.get_test()
         return self._get_data_from_generator(generator)
 
-    def get_valid(self) -> tf.data.Dataset:
+    def _create_valid_data(self) -> tf.data.Dataset:
         generator = self.data_generator.get_valid()
         return self._get_data_from_generator(generator)
 

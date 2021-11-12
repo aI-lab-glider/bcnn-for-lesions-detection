@@ -24,7 +24,7 @@ class Paths:
     MASKS_DIR = 'MASKS'
     REFERENCE_SEGMENTATIONS_DIR = 'REFERENCE_SEGMENTATIONS'
 
-    PROJECT_DIR = Path.cwd().parent
+    PROJECT_DIR = Path.cwd()
     DATA_DIR = PROJECT_DIR / "data"
     CONFIG_PATH = PROJECT_DIR / 'config.json'
 
@@ -35,6 +35,9 @@ class Paths:
     NIFTI_PATH = DATA_DIR / 'nifti'
     NPY_PATH = DATA_DIR / 'npy'
     MASK_FILE_PATTERN = 'MASK_*'
+
+    # File
+    MASK_FILE_PATTERN_PATH = MASKS_PATH / MASK_FILE_PATTERN
 
     # Directories' paths
     CHUNKS_TEST_PATH = CHUNKS_PATH / TEST_DIR

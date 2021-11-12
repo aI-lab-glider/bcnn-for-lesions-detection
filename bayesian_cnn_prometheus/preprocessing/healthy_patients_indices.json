@@ -1,3 +1,6 @@
 {
-  "healthy_patients_indices": []
+  "healthy_patients_indices": [
+    "0002",
+    "0001"
+  ]
 }

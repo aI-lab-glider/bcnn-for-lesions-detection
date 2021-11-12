@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
+import nibabel as nib
 import numpy as np
 
 import bayesian_cnn_prometheus
@@ -73,13 +74,13 @@ class DataSplitter:
         Finds indices of healthy patients scans in dataset.
         :return: list of indices
         """
-        masks_paths = glob.glob(Paths.MASKS_PATH / Paths.MASK_FILE_PATTERN)
+        masks_paths = glob.glob(str(Paths.MASK_FILE_PATTERN_PATH))
         healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
         healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
 
     @staticmethod
-    def _is_patient_healthy(target_path: str, nib=None) -> bool:
+    def _is_patient_healthy(target_path: str) -> bool:
         """
         Verifies if patient is healthy.
         :param target_path: path to the mask with pathological changes
