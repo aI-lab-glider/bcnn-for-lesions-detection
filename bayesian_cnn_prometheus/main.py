@@ -15,11 +15,11 @@ def main():
     data_loader = DataLoader(config.get('preprocessing'), batch_size, chunk_size)
     data_loader.load_data()
 
-    detector = BayesianDetector(config)
-    detector.put_train_data(data_loader.get_train_data())
-    detector.put_valid_data(data_loader.get_valid_data())
-    detector.create_model()
-    detector.fit()
+    X = data_loader.get_train_data()
+    y_valid = data_loader.get_valid_data()
+
+    detector = BayesianDetector(config, batch_size)
+    detector.fit(X, y_valid)
 
 
 def get_config():

@@ -17,7 +17,7 @@ class DataGenerator:
         self.batch_size = batch_size
         self.should_normalise = preprocessing_config.get("normalize_images").get("is_activated")
         self.image_loader = ImageLoader(preprocessing_config.get('transform_nifti_to_npy').get('ext'))
-        # ProxPxD: is there a need for the activation of chunking?
+        # TODO ProxPxD: is there a need for the activation of chunking?
         self.chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
         self.data_splitter = DataSplitter(preprocessing_config.get('create_data_structure'),
                                           preprocessing_config.get('update_healthy_patients_indices'))

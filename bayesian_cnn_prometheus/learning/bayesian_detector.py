@@ -10,12 +10,12 @@ from .model.bayesian_vnet import bayesian_vnet
 
 class BayesianDetector:
 
-    def __init__(self, config: Dict):
-        preprocessing_config = config.get('../preprocessing')
+    def __init__(self, config: Dict, batch_size: int):
         self.config = config
-        self._input_shape: Tuple[int] = None
+        self._input_shape: Tuple[int, ...] = None
         self._train_len: int = None
         self._model = None
+        self._batch_size = batch_size
 
         self._train_data = None
         self._valid_data = None
@@ -31,7 +31,6 @@ class BayesianDetector:
         self._kl_start_epoch = config.get('kl_start_epoch')
         self._kl_alpha_increase_per_epoch = config.get('kl_alpha_increase_per_epoch')
         self._kl_alpha = self._adjust_kl_alpha(config.get('kl_alpha'))
-        self._scale_factor = config.get('scale_factor')
 
         self._weights_path = config.get('weights_path')
         self._weights_dir = config.get('weights_dir')
@@ -48,33 +47,37 @@ class BayesianDetector:
         self._valid_ds = config.get('valid_ds')
 
     def _adjust_kl_alpha(self, kl_alpha: int):
+        if kl_alpha is None:
+            kl_alpha = 0.2  # TODO create a place to store default values// .2 is just a blind guess
         if self._initial_epoch >= self._kl_start_epoch:
             kl_alpha = min(1.,
                            kl_alpha + (self._initial_epoch - self._kl_start_epoch) * self._kl_alpha_increase_per_epoch)
 
         return K.variable(kl_alpha)
 
-    def put_train_data(self, train_data):  # TODO think if is it the right way
-        self._train_data = train_data
-        self._input_shape = BayesianDetector.get_input_shape(train_data)
-        self._train_len = self._calculate_train_len()
-
-    def put_valid_data(self, valid_data):  # TODO think if is it the right way
-        self._valid_data = valid_data
-
-    def create_model(self):
-        self._initialize_model()
+    def fit(self, X, y):
+        print('Initializing the model...')
+        self._initialize_model(X)
         self._initialize_callbacks()
 
-    def _initialize_model(self):
-        self._model = bayesian_vnet(self._input_shape, kernel_size=self._kernel_size, activation=self._activation,
+        print('Fitting the model...')
+        self._model.fit(x=X, epochs=self._epochs, initial_epoch=self._initial_epoch,
+                        callbacks=[self._checkpointer, self._scheduler, self._annealer],
+                        validation_data=y,
+                        steps_per_epoch=1, validation_steps=1)
+
+    def _initialize_model(self, X):
+        input_shape = BayesianDetector._get_input_shape(X)
+        train_len = self._calculate_train_len()
+
+        self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
                                     padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
-        loss_function = variational_free_energy_loss(self._model, self._scale_factor, self._kl_alpha)
+        loss_function = variational_free_energy_loss(self._model, train_len / self._batch_size, self._kl_alpha)
         self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
-        self._checkpoint_path = BayesianDetector.get_paths('bayesian', self._weights_dir)  # TODO ProxPxD Refactor
+        self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)  # TODO ProxPxD Refactor
         self._checkpointer = ModelCheckpoint(self._checkpoint_path, verbose=1, save_weights_only=True,
                                              save_best_only=True, )
         self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
@@ -83,7 +86,7 @@ class BayesianDetector:
                                                                                      self._kl_alpha_increase_per_epoch)
 
     @staticmethod
-    def get_paths(network_type: str, weights_dir):
+    def _get_paths(network_type: str, weights_dir):
         checkpoint_path = (weights_dir + f"/{network_type}/{network_type}" + "-{epoch:02d}"
                                                                              "-{val_acc:.3f}-{val_loss:.0f}.h5")
         return checkpoint_path
@@ -105,16 +108,8 @@ class BayesianDetector:
 
         return schedule
 
-    def fit(self):
-        print('Fitting the model...')
-        self._model.fit(x=self._train_data, epochs=self._epochs,
-                        initial_epoch=self._initial_epoch,
-                        callbacks=[self._checkpointer, self._scheduler, self._annealer],
-                        validation_data=self._valid_data,
-                        steps_per_epoch=1, validation_steps=1)
-
     @staticmethod
-    def get_input_shape(dataset: tf.data.Dataset) -> Tuple[int]:
+    def _get_input_shape(dataset: tf.data.Dataset) -> Tuple[int]:
         """
         Get input dataset from tensorflow dataset object.
         :param dataset: tensorflow dataset object
