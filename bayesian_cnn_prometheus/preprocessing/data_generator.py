@@ -2,10 +2,10 @@ import functools
 from typing import Dict, Generator
 
 import numpy as np
-from bayesian_cnn_prometheus.preprocessing.preprocessing_links import ImageLoader
 
 from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
+from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
 
 
 class DataGenerator:
@@ -46,7 +46,7 @@ class DataGenerator:
         """
         for image_index in self.dataset_structure[dataset_type]:
             x_npy, y_npy = self.image_loader.load(image_index)
-            x_npy_norm = DataGenerator.normalize(x_npy) if self.should_normalise else x_npy
+            x_npy_norm = DataGenerator._normalize(x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
             for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size),
                                         DataGenerator._generate_chunks(y_npy, self.chunk_size)):
@@ -77,7 +77,7 @@ class DataGenerator:
                     yield chunk
 
     @staticmethod
-    def normalize(image: np.array) -> np.array:
+    def _normalize(image: np.array) -> np.array:
         """
         Transforms data to have mean 0 and std 1 (standardize).
         :param image: non-standardized image to transform
