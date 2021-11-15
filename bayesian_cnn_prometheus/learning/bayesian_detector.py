@@ -11,7 +11,7 @@ from .model.bayesian_vnet import bayesian_vnet
 class BayesianDetector:
 
     def __init__(self, config: Dict, batch_size: int):
-        self.config = config
+        self._config = config
         self._input_shape: Tuple[int, ...] = None
         self._train_len: int = None
         self._model = None
@@ -77,7 +77,7 @@ class BayesianDetector:
         self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
-        self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)  # TODO ProxPxD Refactor
+        self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)
         self._checkpointer = ModelCheckpoint(self._checkpoint_path, verbose=1, save_weights_only=True,
                                              save_best_only=True, )
         self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))

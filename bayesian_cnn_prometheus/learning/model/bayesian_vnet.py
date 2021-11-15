@@ -1,9 +1,9 @@
+import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow.keras.layers import Input, Conv3D, MaxPooling3D, UpSampling3D, concatenate
 from tensorflow.keras.models import Model
 
 from bayesian_cnn_prometheus.learning.model.groupnorm import GroupNormalization
-from bayesian_cnn_prometheus.learning.model.utils import normal_prior
 
 
 def down_stage(inputs, filters, kernel_size=3,
@@ -101,3 +101,16 @@ def bayesian_vnet(input_shape=(280, 280, 280, 1), kernel_size=3,
                       padding=padding)
 
     return Model(inputs=inputs, outputs=conv8)
+
+
+def normal_prior(prior_std):
+    """Defines normal distribution prior for Bayesian neural network."""
+
+    def prior_fn(dtype, shape, name, trainable, add_variable_fn):
+        tfd = tfp.distributions
+        dist = tfd.Normal(loc=tf.zeros(shape, dtype),
+                          scale=dtype.as_numpy_dtype((prior_std)))
+        batch_ndims = tf.size(input=dist.batch_shape_tensor())
+        return tfd.Independent(dist, reinterpreted_batch_ndims=batch_ndims)
+
+    return prior_fn

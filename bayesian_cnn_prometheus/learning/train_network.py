@@ -1,10 +1,7 @@
-from model.train import train
-from model.train import ex
 
 
-@ex.automain
 def train_network():
-    train()
+    pass
 
 
 if __name__ == '__main__':

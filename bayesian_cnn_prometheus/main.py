@@ -1,4 +1,5 @@
 import json
+import os
 
 from bayesian_cnn_prometheus.constants import BATCH_SIZE, CHUNK_SIZE
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
@@ -29,4 +30,6 @@ def get_config():
 
 
 if __name__ == '__main__':
+    #  TODO ProxPxD Do we need?
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
     main()
