@@ -32,19 +32,22 @@ class PreprocessingPipeline:
 
         def generator():
             steps = [TransformNiftiToNpy(self.config), NormalizeImages(self.config), CreateChunks(self.config)]
-            for image_index in self.dataset_structure[dataset_type]:
-                x_npy, y_npy = steps[0].run(self.config, image_index)
-                x_npy_norm = steps[1].run(self.config, x_npy)
-                images_chunks, targets_chunks = [], []
-                for x_chunk, y_chunk in zip(steps[2].run(self.config, x_npy_norm), steps[2].run(self.config, y_npy)):
-                    x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
-                    y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
-                    images_chunks.append(x_chunk)
-                    targets_chunks.append(y_chunk)
+            while True:
+                for image_index in self.dataset_structure[dataset_type]:
+                    x_npy, y_npy = steps[0].run(self.config, image_index)
+                    x_npy_norm = steps[1].run(self.config, x_npy)
+                    images_chunks, targets_chunks = [], []
+                    for x_chunk, y_chunk in zip(steps[2].run(self.config, x_npy_norm),
+                                                steps[2].run(self.config, y_npy)):
+                        x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
+                        y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
-                    if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
-                        yield np.array(images_chunks), np.array(targets_chunks)
+                        images_chunks.append(x_chunk)
+                        targets_chunks.append(y_chunk)
+
+                        if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
+                            yield np.array(images_chunks), np.array(targets_chunks)
 
         return generator
 
