@@ -109,13 +109,13 @@ class BayesianDetector:
         return schedule
 
     @staticmethod
-    def _get_input_shape(dataset: tf.data.Dataset) -> Tuple[int]:
+    def _get_input_shape(dataset: tf.data.Dataset) -> Tuple[int, ...]:
         """
         Get input dataset from tensorflow dataset object.
         :param dataset: tensorflow dataset object
         :return: input shape
         """
-        return tuple([int(dim.value) for dim in list(dataset.element_spec[0].shape)])
+        return tuple(int(dim.value) for dim in list(dataset.element_spec[0].shape))
 
     @staticmethod
     def _calculate_train_len():
