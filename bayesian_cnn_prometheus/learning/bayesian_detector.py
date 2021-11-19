@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Tuple, Dict
 
 import math
@@ -81,14 +82,12 @@ class BayesianDetector:
         self._checkpointer = ModelCheckpoint(self._checkpoint_path, verbose=1, save_weights_only=True,
                                              save_best_only=True, )
         self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
-        self._annealer = Callback() if self._kl_alpha is None else AnnealingCallback(self._kl_alpha,
-                                                                                     self._kl_start_epoch,
-                                                                                     self._kl_alpha_increase_per_epoch)
+        self._annealer = Callback() if self._kl_alpha is None else \
+            AnnealingCallback(self._kl_alpha, self._kl_start_epoch, self._kl_alpha_increase_per_epoch)
 
     @staticmethod
-    def _get_paths(network_type: str, weights_dir):
-        checkpoint_path = (weights_dir + f"/{network_type}/{network_type}" + "-{epoch:02d}"
-                                                                             "-{val_acc:.3f}-{val_loss:.0f}.h5")
+    def _get_paths(network_type: str, weights_dir: Path):
+        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.0f}.h5")
         return checkpoint_path
 
     @staticmethod

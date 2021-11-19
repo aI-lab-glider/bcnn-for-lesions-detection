@@ -3,11 +3,10 @@ import os
 
 from bayesian_cnn_prometheus.constants import BATCH_SIZE, CHUNK_SIZE
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
-# TODO ProxPxD find a proper name
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
 
-def main():
+def main():  # TODO ProxPxD find a proper name
     config = get_config()
     preprocessing_config = config.get('preprocessing')
     batch_size = config.get(BATCH_SIZE)  # 1config
