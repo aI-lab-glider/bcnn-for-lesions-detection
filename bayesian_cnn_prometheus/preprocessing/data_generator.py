@@ -44,20 +44,22 @@ class DataGenerator:
         :param batch_size: number of chunks in one batch
         :return: generator that produces array with chunks
         """
-        for image_index in self.dataset_structure[dataset_type]:
-            x_npy, y_npy = self.image_loader.load(image_index)
-            x_npy_norm = DataGenerator._normalize(x_npy) if self.should_normalise else x_npy
-            images_chunks, targets_chunks = [], []
-            for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size),
-                                        DataGenerator._generate_chunks(y_npy, self.chunk_size)):
-                x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
-                y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
-                images_chunks.append(x_chunk)
-                targets_chunks.append(y_chunk)
+        while True:
+            for image_index in self.dataset_structure[dataset_type]:
+                x_npy, y_npy = self.image_loader.load(image_index)
+                x_npy_norm = DataGenerator._normalize(x_npy) if self.should_normalise else x_npy
+                images_chunks, targets_chunks = [], []
+                for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size),
+                                            DataGenerator._generate_chunks(y_npy, self.chunk_size)):
+                    x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
+                    y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
-                if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
-                    yield np.array(images_chunks), np.array(targets_chunks)
+                    images_chunks.append(x_chunk)
+                    targets_chunks.append(y_chunk)
+
+                    if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
+                        yield np.array(images_chunks), np.array(targets_chunks)
 
     @staticmethod
     def _generate_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16)) -> Generator[np.ndarray, None, None]:
