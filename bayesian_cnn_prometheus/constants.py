@@ -14,7 +14,7 @@ class DatasetTypeTargets:
 
 
 class Paths:
-    PROJECT_DIR = Path.cwd()
+    PROJECT_DIR = Path(__file__).parent
     DATA_DIR = PROJECT_DIR / "data"
 
     CONFIG_PATH = PROJECT_DIR / 'config.json'

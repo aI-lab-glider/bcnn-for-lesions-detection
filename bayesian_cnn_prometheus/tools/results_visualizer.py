@@ -62,14 +62,13 @@ class ResultsVisualizer:
         segmentation_variance_ax.imshow(segmentation_variance_masked, cmap='gray')
         segmentation_variance_ax.axis('off')
 
-        plt.savefig(str(Paths.SUMMARY_FILE_PATTERN_PATH).format(patient_id, str(slice_number), 'png'),
-                    bbox_inches='tight')
+        plt.savefig(str(Paths.SUMMARY_FILE_PATTERN_PATH).format(patient_id, str(slice_number), 'png'))
 
     @staticmethod
     def get_segmentation_from_mean(predictions):
         segmentation = np.mean(predictions, axis=0)
-        segmentation[segmentation > 0.5] = 1.
-        segmentation[segmentation <= 0.5] = 0.
+        segmentation[segmentation > 0.2] = 1.
+        segmentation[segmentation <= 0.2] = 0.
         return segmentation
 
     @staticmethod

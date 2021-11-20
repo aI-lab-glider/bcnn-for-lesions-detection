@@ -20,7 +20,7 @@ def main():
 
 
 def get_config():
-    with open('config.json') as cf:
+    with open('../config.json') as cf:
         config = json.load(cf)
     return config
 

@@ -74,7 +74,7 @@ class DataSplitter:
         Finds indices of healthy patients scans in dataset.
         :return: list of indices
         """
-        masks_paths = glob.glob(str(Paths.MASK_FILE_PATTERN_PATH))
+        masks_paths = glob.glob(str(Paths.MASK_FILE_PATTERN_PATH).format('*', 'nii.gz'))
         healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
         healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
