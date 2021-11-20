@@ -18,7 +18,7 @@ def main():  # TODO ProxPxD find a proper name
     X = data_loader.get_train_data()
     y_valid = data_loader.get_valid_data()
 
-    detector = BayesianDetector(config, batch_size)
+    detector = BayesianDetector(config, batch_size, BayesianDetector.get_input_shape(X))
     detector.fit(X, y_valid)
 
 

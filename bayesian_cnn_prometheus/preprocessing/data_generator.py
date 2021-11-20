@@ -30,14 +30,14 @@ class DataGenerator:
         return self._get_data_generator(DatasetType.TEST, self.batch_size)
 
     def get_valid(self):
-        return self._get_data_generator(DatasetType.VALID, 1)
+        return self._get_data_generator(DatasetType.VALID, self.batch_size)
 
-    def _get_data_generator(self, dataset_type: DatasetType, batch_size: int = 1):
+    def _get_data_generator(self, dataset_type: DatasetType, batch_size: int):
         if self.dataset_structure is None:
             self.dataset_structure = self.data_splitter.split_indices()
         return functools.partial(self._generate_data, dataset_type, batch_size)
 
-    def _generate_data(self, dataset_type: DatasetType, batch_size: int = 1):
+    def _generate_data(self, dataset_type: DatasetType, batch_size: int):
         """
         Creates a generator that produces arrays with chunks ready for training.
         :param dataset_type: type of dataset (train, test, valid)

@@ -11,7 +11,7 @@ from .model.bayesian_vnet import bayesian_vnet
 
 class BayesianDetector:
 
-    def __init__(self, config: Dict, batch_size: int):
+    def __init__(self, config: Dict, batch_size: int, input_shape: Tuple[int, ...]):
         self._config = config
         self._input_shape: Tuple[int, ...] = None
         self._train_len: int = None
@@ -47,28 +47,10 @@ class BayesianDetector:
         self._initial_epoch = config.get('initial_epoch')
         self._valid_ds = config.get('valid_ds')
 
-    def _adjust_kl_alpha(self, kl_alpha: int):
-        if kl_alpha is None:
-            kl_alpha = 0.2  # TODO create a place to store default values// .2 is just a blind guess
-        if self._initial_epoch >= self._kl_start_epoch:
-            kl_alpha = min(1.,
-                           kl_alpha + (self._initial_epoch - self._kl_start_epoch) * self._kl_alpha_increase_per_epoch)
-
-        return K.variable(kl_alpha)
-
-    def fit(self, X, y):
-        print('Initializing the model...')
-        self._initialize_model(X)
+        self._initialize_model(input_shape)
         self._initialize_callbacks()
 
-        print('Fitting the model...')
-        self._model.fit(x=X, epochs=self._epochs, initial_epoch=self._initial_epoch,
-                        callbacks=[self._checkpointer, self._scheduler, self._annealer],
-                        validation_data=y,
-                        steps_per_epoch=1, validation_steps=1)
-
-    def _initialize_model(self, X):
-        input_shape = BayesianDetector._get_input_shape(X)
+    def _initialize_model(self, input_shape: Tuple[int, ...]):
         train_len = self._calculate_train_len()
 
         self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
@@ -84,6 +66,22 @@ class BayesianDetector:
         self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
         self._annealer = Callback() if self._kl_alpha is None else \
             AnnealingCallback(self._kl_alpha, self._kl_start_epoch, self._kl_alpha_increase_per_epoch)
+
+    def _adjust_kl_alpha(self, kl_alpha: int):
+        if kl_alpha is None:
+            kl_alpha = 0.2  # TODO create a place to store default values// .2 is just a blind guess
+        if self._initial_epoch >= self._kl_start_epoch:
+            kl_alpha = min(1.,
+                           kl_alpha + (self._initial_epoch - self._kl_start_epoch) * self._kl_alpha_increase_per_epoch)
+
+        return K.variable(kl_alpha)
+
+    def fit(self, X, y):
+        print('Fitting the model...')
+        self._model.fit(x=X, epochs=self._epochs, initial_epoch=self._initial_epoch,
+                        callbacks=[self._checkpointer, self._scheduler, self._annealer],
+                        validation_data=y,
+                        steps_per_epoch=1, validation_steps=1)
 
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
@@ -109,7 +107,7 @@ class BayesianDetector:
         return schedule
 
     @staticmethod
-    def _get_input_shape(dataset: tf.data.Dataset) -> Tuple[int, ...]:
+    def get_input_shape(dataset: tf.data.Dataset) -> Tuple[int, ...]:
         """
         Get input dataset from tensorflow dataset object.
         :param dataset: tensorflow dataset object
