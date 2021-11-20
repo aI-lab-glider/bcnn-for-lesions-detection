@@ -113,7 +113,7 @@ class BayesianDetector:
         :param dataset: tensorflow dataset object
         :return: input shape
         """
-        return tuple(int(dim.value) for dim in list(dataset.element_spec[0].shape))
+        return tuple([int(dim.value) for dim in list(dataset.element_spec[0].shape)[1:]])
 
     @staticmethod
     def _calculate_train_len():
