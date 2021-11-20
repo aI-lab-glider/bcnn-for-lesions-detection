@@ -87,6 +87,7 @@ class BayesianDetector:
 
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
+        Path(weights_dir).mkdir(parents=True, exist_ok=True)
         checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.0f}.h5")
         return checkpoint_path
 
