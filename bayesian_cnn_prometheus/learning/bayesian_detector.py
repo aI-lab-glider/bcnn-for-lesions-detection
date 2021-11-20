@@ -79,7 +79,7 @@ class BayesianDetector:
 
     def _initialize_callbacks(self):
         self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)
-        self._checkpointer = ModelCheckpoint(self._checkpoint_path, verbose=1, save_weights_only=True,
+        self._checkpointer = ModelCheckpoint(str(self._checkpoint_path), verbose=1, save_weights_only=True,
                                              save_best_only=True, )
         self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
         self._annealer = Callback() if self._kl_alpha is None else \
