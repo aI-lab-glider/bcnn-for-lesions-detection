@@ -1,13 +1,9 @@
 import os
 
 import numpy as np
-import tensorflow as tf
 import tensorflow.keras.backend as K
-import tensorflow_probability as tfp
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
-
-from bayesian_cnn_prometheus.learning.model.experiment_setup import ex
 
 
 def round_down(num, factor):
@@ -37,12 +33,10 @@ def absolute_file_paths(directory, match=""):
         break
     return paths
 
-
 def standardize(raw):
     """Transforms data to have mean 0 and std 1."""
 
     return (raw - np.mean(raw)) / np.std(raw)
-
 
 def variational_free_energy_loss(model, scale_factor, kl_alpha):
     """Defines variational free energy loss.
@@ -59,21 +53,6 @@ def variational_free_energy_loss(model, scale_factor, kl_alpha):
         return bce + K.get_value(kl_alpha) * kl
 
     return loss
-
-
-@ex.capture
-def normal_prior(prior_std):
-    """Defines normal distribution prior for Bayesian neural network."""
-
-    def prior_fn(dtype, shape, name, trainable, add_variable_fn):
-        tfd = tfp.distributions
-        dist = tfd.Normal(loc=tf.zeros(shape, dtype),
-                          scale=dtype.as_numpy_dtype((prior_std)))
-        batch_ndims = tf.size(input=dist.batch_shape_tensor())
-        return tfd.Independent(dist, reinterpreted_batch_ndims=batch_ndims)
-
-    return prior_fn
-
 
 def get_latest_file(directory, match=""):
     """Gets the absolute file path of the last modified file in a directory.

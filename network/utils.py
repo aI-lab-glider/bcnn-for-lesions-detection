@@ -8,8 +8,10 @@ from sacred import Experiment
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
 
+from bayesian_cnn_prometheus.constants import Paths
+
 ex = Experiment()
-ex.add_config("configs/config.json")
+ex.add_config(str(Paths.CONFIG_PATH.resolve()))
 
 
 def round_down(num, factor):
