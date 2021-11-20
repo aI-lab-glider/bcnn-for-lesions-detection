@@ -1,10 +1,11 @@
 from typing import Tuple, List
-from tqdm import tqdm
 
-import matplotlib.pyplot as plt
+import nibabel as nib
 import numpy as np
 from tensorflow.python.keras.engine.training import Model
+from tqdm import tqdm
 
+from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import bayesian_vnet
 
@@ -23,7 +24,7 @@ class BayesianModelEvaluator:
         image_chunks, coords = self.create_chunks(image)
 
         predictions = []
-        for sample_num in tqdm(range(samples_num)):
+        for _ in tqdm(range(samples_num)):
             prediction = np.zeros(image.shape)
 
             for chunk, coord in zip(image_chunks, coords):
@@ -37,31 +38,11 @@ class BayesianModelEvaluator:
         return predictions
 
     @staticmethod
-    def get_segmentation_from_mean(predictions):
-        segmentation = np.mean(predictions, axis=0)
-        segmentation[segmentation > 0.5] = 1.
-        segmentation[segmentation <= 0.5] = 0.
-        return segmentation
+    def save_predictions(patient_id, predictions):
+        img = nib.Nifti1Image(np.array(predictions), np.eye(4))
 
-    @staticmethod
-    def get_segmentation_variance(predictions):
-        return np.var(predictions, axis=0)
-
-    @staticmethod
-    def plot_segmentations(segmentation_from_mean: np.array, segmentation_variance: np.array, image_path, mask_path,
-                           reference_path, slice_number):
-        image = load_nifti_file(image_path)
-        mask = load_nifti_file(mask_path)
-        reference = load_nifti_file(reference_path)
-
-        f, ax = plt.subplots(1, 5)
-        ax[0] = image[:, :, slice_number]
-        ax[1] = mask[:, :, slice_number]
-        ax[2] = reference[:, :, slice_number]
-        ax[3] = segmentation_from_mean[:, :, slice_number]
-        ax[4] = segmentation_variance[:, :, slice_number]
-
-        plt.show()
+        img.header.get_xyzt_units()
+        img.to_filename(str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(patient_id, 'nii.gz'))
 
     def load_saved_model(self, weights_path: str) -> Model:
         """
@@ -125,17 +106,3 @@ class BayesianModelEvaluator:
         coords[2]:coords[2] + self.input_shape[2]] += chunk
 
         return array
-
-
-if __name__ == '__main__':
-    weights_path = '/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/bayesian_cnn_prometheus/weights/bayesian-03-0.572-1319090.h5'
-    bme = BayesianModelEvaluator(weights_path)
-
-    image_path = '/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/bayesian_cnn_prometheus/data/IMAGES/IMG_0001.nii.gz'
-    reference_path = '/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/bayesian_cnn_prometheus/data/REFERENCE_SEGMENTATIONS/LUNGS_IMG_0001.nii.gz'
-    mask_path = '/home/alikrz/Pulpit/MyStuff/cancer-detection/3d-cnn-prometheus/bayesian_cnn_prometheus/data/MASKS/MASK_0001.nii.gz'
-
-    predictions = bme.evaluate(image_path, 2)
-    segmentations_from_mean = bme.get_segmentation_from_mean(predictions)
-    segmentations_variance = bme.get_segmentation_variance(predictions)
-    bme.plot_segmentations(segmentations_from_mean, segmentations_variance, image_path, mask_path, reference_path, 56)

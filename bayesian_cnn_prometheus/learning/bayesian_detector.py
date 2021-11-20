@@ -81,7 +81,7 @@ class BayesianDetector:
         self._model.fit(x=X, epochs=self._epochs, initial_epoch=self._initial_epoch,
                         callbacks=[self._checkpointer, self._scheduler, self._annealer],
                         validation_data=y,
-                        steps_per_epoch=1, validation_steps=1)
+                        steps_per_epoch=10, validation_steps=10)
 
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
