@@ -2,11 +2,14 @@ from pathlib import Path
 from typing import Tuple, Dict
 
 import math
+import tensorflow as tf
+import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
+from tensorflow_core.python.keras.callbacks import Callback
 from tensorflow_core.python.keras.optimizer_v2.adam import Adam
 
-from network.utils import *
 from .model.bayesian_vnet import bayesian_vnet
+from .model.utils import AnnealingCallback, variational_free_energy_loss
 
 
 class BayesianDetector:
