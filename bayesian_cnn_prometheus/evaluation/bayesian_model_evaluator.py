@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Tuple, List
 
 import nibabel as nib
@@ -15,32 +16,49 @@ class BayesianModelEvaluator:
         """
         Creates BayesianModelEvaluator object to evaluate bayesian model.
         :param weights_path: path to bayesian model weights in h5 format
+        :param input_shape: shape of the input to the model
         """
         self.input_shape = input_shape
         self.model = self.load_saved_model(weights_path)
 
-    def evaluate(self, image_path: str, samples_num: int):
+    def evaluate(self, image_path: str, samples_num: int) -> List[np.array]:
+        """
+        Samples model samples_num times and returns list of predictions.
+        :param image_path: path to the image to predict
+        :param samples_num: number of samples to make
+        :return: list of arrays with samples_num predictions on image
+        """
         image = load_nifti_file(image_path)
-        image_chunks, coords = self.create_chunks(image)
+        image_chunks, coords = self.create_chunks(image, [32, 32, 16])
 
         predictions = []
         for _ in tqdm(range(samples_num)):
             prediction = np.zeros(image.shape)
+            count_prediction = np.zeros(image.shape)
 
             for chunk, coord in zip(image_chunks, coords):
                 reshaped_chunk = chunk.reshape(1, *chunk.shape, 1)
                 chunk_pred = self.model.predict(reshaped_chunk)
                 reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
-                prediction = self.add_chunk_to_array(prediction, reshaped_chunk_pred, coord)
 
-            predictions.append(prediction)
+                prediction = self.add_chunk_to_array(prediction, reshaped_chunk_pred, coord)
+                count_prediction = self.add_chunk_to_array(count_prediction, np.ones(chunk.shape), coord)
+
+            safe_count_prediction = copy(count_prediction)
+            safe_count_prediction[count_prediction == 0] = 1
+
+            predictions.append(prediction / safe_count_prediction)
 
         return predictions
 
     @staticmethod
-    def save_predictions(patient_id, predictions):
+    def save_predictions(patient_id, predictions) -> None:
+        """
+        Saves predictions list in nifti file.
+        :param patient_id: four-digit patient id
+        :param predictions: list of arrays with predictions
+        """
         img = nib.Nifti1Image(np.array(predictions), np.eye(4))
-
         img.header.get_xyzt_units()
         img.to_filename(str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(patient_id, 'nii.gz'))
 
@@ -58,48 +76,38 @@ class BayesianModelEvaluator:
         model.load_weights(weights_path)
         return model
 
-    def create_chunks(self, array: np.array) -> (List[np.array], List[Tuple[int, int, int]]):
+    def create_chunks(self, array: np.array, window: List[int]) -> (List[np.array], List[Tuple[int, int, int]]):
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
-        :return:
+        :param window: three-elements list with steps value to make in each axis
+        :return: list of chunks and list of corresponding coordinates
         """
         origin_x, origin_y, origin_z = array.shape
         chunk_x, chunk_y, chunk_z, _ = self.input_shape
+        window_x, window_y, window_z = window
 
         chunks = []
         coords = []
 
-        for x in range(0, origin_x, chunk_x)[:-1]:
-            for y in range(0, origin_y, chunk_y)[:-1]:
-                for z in range(0, origin_z, chunk_z)[:-1]:
+        for x in range(0, origin_x, window_x)[:-1]:
+            for y in range(0, origin_y, window_y)[:-1]:
+                for z in range(0, origin_z, window_z)[:-1]:
                     chunk = array[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
-
-                    chunks.append(chunk)
-                    coords.append((x, y, z))
+                    if chunk.shape == self.input_shape[:3]:
+                        chunks.append(chunk)
+                        coords.append((x, y, z))
 
         return chunks, coords
 
-    def reconstruct(self, chunks: List[np.array], coords: List[Tuple[int, int, int, int]],
-                    origin_image_shape: Tuple[int, int]):
+    def add_chunk_to_array(self, array: np.array, chunk: np.array, coords: np.array) -> np.array:
         """
-        Reconstructs a 3D numpy array from generated chunks.
-        :param chunks:
-        :param coords:
-        :param origin_image_shape:
-        :return:
+        Adds chunk to bigger array according to coordinates.
+        :param array: big array
+        :param chunk: small array, it should be added to the bigger one
+        :param coords: coordinates of big array where small array should be added
+        :return: big array with added small array
         """
-
-        reconstructed_array = np.zeros(origin_image_shape)
-
-        for chunk, coord in zip(chunks, coords):
-            reconstructed_array[coord[0]:coord[0] + self.input_shape[0], coord[1]:coord[1] + self.input_shape[1],
-            coord[2]:coord[2] + self.input_shape[2]] += chunk[0:2]
-
-        return reconstructed_array
-
-    def add_chunk_to_array(self, array, chunk, coords):
-        """Adds a smaller 4D numpy array to a larger 4D numpy array."""
 
         array[coords[0]:coords[0] + self.input_shape[0],
         coords[1]:coords[1] + self.input_shape[1],
