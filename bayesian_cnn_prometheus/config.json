@@ -15,9 +15,9 @@
     "create_chunks": {
       "is_activated": true,
       "chunk_size": [
-        32,
-        32,
-        16
+        64,
+        64,
+        32
       ]
     }
   },
@@ -36,8 +36,9 @@
   "kl_alpha": 0,
   "kl_start_epoch": 2,
   "kl_alpha_increase_per_epoch": 0.5,
-  "epochs": 15,
-  "steps_number": 10,
+  "epochs": 3,
+  "steps_per_epoch": 10,
+  "validation_steps": 5,
   "initial_epoch": 0,
   "initial_learning_rate": 0.001,
   "lr_decay_start_epoch": 10,
@@ -48,8 +49,8 @@
   "lower_percentile": 30,
   "upper_percentile": 70,
   "chunk_size": [
-    32,
-    32,
-    16
+    64,
+    64,
+    32
   ]
 }

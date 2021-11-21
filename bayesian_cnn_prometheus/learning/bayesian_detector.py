@@ -47,6 +47,8 @@ class BayesianDetector:
         # For fitting
         self._lr_decay_start_epoch = config.get('lr_decay_start_epoch')
         self._epochs = config.get('epochs')
+        self._steps_per_epoch = config.get('steps_per_epoch')
+        self._validation_steps = config.get('validation_steps')
         self._initial_epoch = config.get('initial_epoch')
         self._valid_ds = config.get('valid_ds')
 
@@ -84,7 +86,7 @@ class BayesianDetector:
         self._model.fit(x=X, epochs=self._epochs, initial_epoch=self._initial_epoch,
                         callbacks=[self._checkpointer, self._scheduler, self._annealer],
                         validation_data=y,
-                        steps_per_epoch=10, validation_steps=10)
+                        steps_per_epoch=self._steps_per_epoch, validation_steps=self._validation_steps)
 
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
