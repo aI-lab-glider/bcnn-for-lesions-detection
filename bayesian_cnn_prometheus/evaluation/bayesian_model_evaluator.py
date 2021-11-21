@@ -21,15 +21,16 @@ class BayesianModelEvaluator:
         self.input_shape = input_shape
         self.model = self.load_saved_model(weights_path)
 
-    def evaluate(self, image_path: str, samples_num: int) -> List[np.array]:
+    def evaluate(self, image_path: str, samples_num: int, window: List[int]) -> List[np.array]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image_path: path to the image to predict
         :param samples_num: number of samples to make
+        :param window: three-elements list with steps value to make in each axis
         :return: list of arrays with samples_num predictions on image
         """
         image = load_nifti_file(image_path)
-        image_chunks, coords = self.create_chunks(image, [32, 32, 16])
+        image_chunks, coords = self.create_chunks(image, window)
 
         predictions = []
         for _ in tqdm(range(samples_num)):
