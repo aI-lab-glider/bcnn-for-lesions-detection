@@ -35,7 +35,7 @@ class BayesianModelEvaluator:
         predictions = []
         for _ in tqdm(range(samples_num)):
             prediction = np.zeros(image.shape)
-            count_prediction = np.zeros(image.shape)
+            count_prediction = np.ones(image.shape)
 
             for chunk, coord in zip(image_chunks, coords):
                 reshaped_chunk = chunk.reshape(1, *chunk.shape, 1)
@@ -45,10 +45,7 @@ class BayesianModelEvaluator:
                 prediction = self.add_chunk_to_array(prediction, reshaped_chunk_pred, coord)
                 count_prediction = self.add_chunk_to_array(count_prediction, np.ones(chunk.shape), coord)
 
-            safe_count_prediction = copy(count_prediction)
-            safe_count_prediction[count_prediction == 0] = 1
-
-            predictions.append(prediction / safe_count_prediction)
+            predictions.append(prediction / count_prediction)
 
         return predictions
 

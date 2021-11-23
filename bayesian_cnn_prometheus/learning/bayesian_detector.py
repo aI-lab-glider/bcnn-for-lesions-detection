@@ -47,7 +47,6 @@ class BayesianDetector:
         # For fitting
         self._lr_decay_start_epoch = config.get('lr_decay_start_epoch')
         self._epochs = config.get('epochs')
-        self._steps_per_epoch = config.get('steps_per_epoch')
         self._validation_steps = config.get('validation_steps')
         self._initial_epoch = config.get('initial_epoch')
         self._valid_ds = config.get('valid_ds')
@@ -81,11 +80,11 @@ class BayesianDetector:
 
         return K.variable(kl_alpha)
 
-    def fit(self, X, y):
+    def fit(self, training_dataset, validation_dataset):
         print('Fitting the model...')
-        self._model.fit(x=X, epochs=self._epochs, initial_epoch=self._initial_epoch,
+        self._model.fit(x=training_dataset, epochs=self._epochs, initial_epoch=self._initial_epoch,
                         callbacks=[self._checkpointer, self._scheduler, self._annealer],
-                        validation_data=y.repeat(), validation_steps=5)
+                        validation_data=validation_dataset.repeat(), validation_steps=self._validation_steps)
 
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
@@ -97,8 +96,6 @@ class BayesianDetector:
     def _get_scheduler(lr_decay_start_epoch: int) -> float:
         """
         Defines exponentially decaying learning rate.
-        :param epoch: actual epoch number
-        :param initial_learning_rate: initial learning rate
         :param lr_decay_start_epoch: epoch number since the learning rate is decaying
         :return: updated value of the learning rate
         """
