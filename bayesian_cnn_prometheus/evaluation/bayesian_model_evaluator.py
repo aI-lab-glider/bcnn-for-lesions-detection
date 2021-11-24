@@ -1,13 +1,11 @@
-from copy import copy
 from typing import Tuple, List
 
-import nibabel as nib
 import numpy as np
 from tensorflow.python.keras.engine.training import Model
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file
+from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import bayesian_vnet
 
 
@@ -35,19 +33,22 @@ class BayesianModelEvaluator:
         predictions = []
         for _ in tqdm(range(samples_num)):
             prediction = np.zeros(image.shape)
-            count_prediction = np.ones(image.shape)
+            count_prediction = np.zeros(image.shape)
 
             for chunk, coord in zip(image_chunks, coords):
                 reshaped_chunk = chunk.reshape(1, *chunk.shape, 1)
                 chunk_pred = self.model.predict(reshaped_chunk)
                 reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
 
-                prediction = self.add_chunk_to_array(prediction, reshaped_chunk_pred, coord)
-                count_prediction = self.add_chunk_to_array(count_prediction, np.ones(chunk.shape), coord)
+                prediction[self._get_window(coord)] += reshaped_chunk_pred
+                count_prediction[self._get_window(coord)] += np.ones(chunk.shape)
 
-            predictions.append(prediction / count_prediction)
+            predictions.append(prediction / np.maximum(count_prediction, 1))
 
         return predictions
+
+    def _get_window(self, coord: List[int]) -> Tuple[slice, ...]:
+        return tuple([slice(coord_, coord_ + input_shape_) for (coord_, input_shape_) in zip(coord, self.input_shape)])
 
     @staticmethod
     def save_predictions(patient_id, predictions) -> None:
@@ -56,9 +57,8 @@ class BayesianModelEvaluator:
         :param patient_id: four-digit patient id
         :param predictions: list of arrays with predictions
         """
-        img = nib.Nifti1Image(np.array(predictions), np.eye(4))
-        img.header.get_xyzt_units()
-        img.to_filename(str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(patient_id, 'nii.gz'))
+        predictions_path = str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
+        save_as_nifti(np.array(predictions), predictions_path)
 
     def load_saved_model(self, weights_path: str) -> Model:
         """

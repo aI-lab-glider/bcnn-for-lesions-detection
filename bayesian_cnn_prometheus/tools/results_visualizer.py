@@ -1,15 +1,18 @@
+from pathlib import Path
+
 import numpy as np
 from matplotlib import pyplot as plt
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, get_standardized_slice
+from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, get_standardized_slice, save_as_nifti
 
 
 class ResultsVisualizer:
     def __init__(self):
         ...
 
-    def visualize_patient_results(self, patient_id: str, predictions: np.array, slice_number: int):
+    def visualize_patient_results(self, patient_id: str, predictions: np.array, slice_number: int,
+                                  save_variance: bool = False):
         image_file_path = str(Paths.IMAGE_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
         mask_file_path = str(Paths.MASK_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
         reference_file_path = str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
@@ -20,6 +23,10 @@ class ResultsVisualizer:
 
         segmentation_from_mean = self.get_segmentation_from_mean(predictions)
         segmentation_variance = self.get_segmentation_variance(predictions)
+
+        if save_variance:
+            segmentation_variance_path = Paths.RESULTS_PATH / Path(f'SEGMENTATION_VARIANCE_{patient_id}.nii.gz')
+            save_as_nifti(segmentation_variance, segmentation_variance_path)
 
         self.plot_segmentations(image, reference, mask, segmentation_from_mean, segmentation_variance, patient_id,
                                 slice_number)
@@ -65,7 +72,7 @@ class ResultsVisualizer:
         plt.savefig(str(Paths.SUMMARY_FILE_PATTERN_PATH).format(patient_id, str(slice_number), 'png'))
 
     @staticmethod
-    def get_segmentation_from_mean(predictions, threshold=0.4):
+    def get_segmentation_from_mean(predictions, threshold=0.3):
         segmentation = np.mean(predictions, axis=0)
         segmentation[segmentation > threshold] = 1.
         segmentation[segmentation <= threshold] = 0.
