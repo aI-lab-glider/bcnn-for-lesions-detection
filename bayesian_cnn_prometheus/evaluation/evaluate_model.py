@@ -11,12 +11,12 @@ def main():
     config = get_config()
     patient_id = image_path.split('.')[0].split('_')[-1]
 
-    model_evaluator = BayesianModelEvaluator(weights_path)
-    predictions = model_evaluator.evaluate(image_path, config['mc_samples'])
+    model_evaluator = BayesianModelEvaluator(weights_path, tuple([*config['chunk_size'], 1]))
+    predictions = model_evaluator.evaluate(image_path, config['mc_samples'], [32, 32, 16])
     model_evaluator.save_predictions(patient_id, predictions)
 
     results_visualizer = ResultsVisualizer()
-    results_visualizer.visualize_patient_results(patient_id, predictions, slice_number=83)
+    results_visualizer.visualize_patient_results(patient_id, predictions, slice_number=83, save_variance=True)
 
 
 def get_config():

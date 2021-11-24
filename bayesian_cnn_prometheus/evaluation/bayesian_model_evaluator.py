@@ -47,7 +47,7 @@ class BayesianModelEvaluator:
 
         return predictions
 
-    def _get_window(self, coord: List[int]) -> Tuple[slice, ...]:
+    def _get_window(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
         return tuple([slice(coord_, coord_ + input_shape_) for (coord_, input_shape_) in zip(coord, self.input_shape)])
 
     @staticmethod
