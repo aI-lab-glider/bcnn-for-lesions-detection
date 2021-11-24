@@ -61,10 +61,7 @@ def bayesian_vnet(input_shape=(280, 280, 280, 1), kernel_size=3,
     prior_std = kwargs.get("prior_std", 1)
     prior_fn = normal_prior(prior_std)
 
-    # TODO Why Input transform input_shape from (16, 32,32,16,1) to (?, 16, 32,32,16,1) ?
-    # Input(input_shape[1:]) - temporary bugfix to enable training
-
-    inputs = Input(input_shape[1:])
+    inputs = Input(input_shape)
     conv1, pool1 = down_stage(inputs, 16,
                               kernel_size=kernel_size,
                               activation=activation,

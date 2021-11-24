@@ -1,5 +1,4 @@
 import json
-import os
 
 from bayesian_cnn_prometheus.constants import BATCH_SIZE, CHUNK_SIZE
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
@@ -15,11 +14,11 @@ def main():  # TODO ProxPxD find a proper name
     data_loader = DataLoader(config.get('preprocessing'), batch_size, chunk_size)
     data_loader.load_data()
 
-    X = data_loader.get_train_data()
-    y_valid = data_loader.get_valid_data()
+    training_dataset = data_loader.get_train_data()
+    validation_dataset = data_loader.get_valid_data()
 
-    detector = BayesianDetector(config, batch_size, BayesianDetector.get_input_shape(X))
-    detector.fit(X, y_valid)
+    detector = BayesianDetector(config, batch_size, BayesianDetector.get_input_shape(training_dataset))
+    detector.fit(training_dataset, validation_dataset)
 
 
 def get_config():
@@ -29,6 +28,4 @@ def get_config():
 
 
 if __name__ == '__main__':
-    #  TODO ProxPxD Do we need?
-    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
     main()
