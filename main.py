@@ -1,6 +1,4 @@
-from preprocessing_pipeline.main import main as run_pipeline
 import os
 
-run_pipeline()
-os.system("cd network && sbatch ../run_python_script.sh train.py")
+os.system('sbatch run_python_script.sh bayesian_cnn_prometheus/learning/train_network.py')
 

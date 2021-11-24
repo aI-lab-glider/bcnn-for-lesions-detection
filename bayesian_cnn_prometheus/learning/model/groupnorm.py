@@ -22,12 +22,11 @@
 #
 # Retrieved from https://github.com/titu1994/Keras-Group-Normalization/blob/master/group_norm.py
 
-from tensorflow.keras.layers import Layer, InputSpec
+from tensorflow.keras import backend as K
+from tensorflow.keras import constraints
 from tensorflow.keras import initializers
 from tensorflow.keras import regularizers
-from tensorflow.keras import constraints
-from tensorflow.keras import backend as K
-
+from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras.utils import get_custom_objects
 
 

@@ -1,15 +1,9 @@
 import os
 
 import numpy as np
-import tensorflow as tf
 import tensorflow.keras.backend as K
-import tensorflow_probability as tfp
-from sacred import Experiment
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
-
-ex = Experiment()
-ex.add_config("configs/config.json")
 
 
 def round_down(num, factor):
@@ -39,6 +33,26 @@ def absolute_file_paths(directory, match=""):
         break
     return paths
 
+def standardize(raw):
+    """Transforms data to have mean 0 and std 1."""
+
+    return (raw - np.mean(raw)) / np.std(raw)
+
+def variational_free_energy_loss(model, scale_factor, kl_alpha):
+    """Defines variational free energy loss.
+
+    Sum of KL divergence (supplied by tfp) and binary cross-entropy.
+    """
+
+    # KL Divergence should be applied once per epoch only, so
+    # scale_factor should be num_samples / batch_size.
+    kl = sum(model.losses) / scale_factor
+
+    def loss(y_true, y_pred):
+        bce = binary_crossentropy(y_true, y_pred)
+        return bce + K.get_value(kl_alpha) * kl
+
+    return loss
 
 def get_latest_file(directory, match=""):
     """Gets the absolute file path of the last modified file in a directory.
@@ -54,49 +68,14 @@ def get_latest_file(directory, match=""):
         return None
 
 
-def standardize(raw):
-    """Transforms data to have mean 0 and std 1."""
-
-    return (raw - np.mean(raw)) / np.std(raw)
-
-
-def variational_free_energy_loss(model, scale_factor, kl_alpha):
-    """Defines variational free energy loss.
-
-    Sum of KL divergence (supplied by tfp) and binary cross-entropy.
-    """
-
-    # KL Divergence should be applied once per epoch only, so
-    # scale_factor should be num_samples / batch_size.
-    kl = sum(model.losses) / scale_factor
-    
-    def loss(y_true, y_pred):
-        bce = binary_crossentropy(y_true, y_pred)
-        return bce + K.get_value(kl_alpha) * kl
-
-    return loss
-
-
-@ex.capture
-def normal_prior(prior_std):
-    """Defines normal distribution prior for Bayesian neural network."""
-
-    def prior_fn(dtype, shape, name, trainable, add_variable_fn):
-        tfd = tfp.distributions
-        dist = tfd.Normal(loc=tf.zeros(shape, dtype),
-                          scale=dtype.as_numpy_dtype((prior_std)))
-        batch_ndims = tf.size(input=dist.batch_shape_tensor())
-        return tfd.Independent(dist, reinterpreted_batch_ndims=batch_ndims)
-
-    return prior_fn
-
 class AnnealingCallback(Callback):
     def __init__(self, kl_alpha, kl_start_epoch, kl_alpha_increase_per_epoch):
         self.kl_alpha = kl_alpha
         self.kl_start_epoch = kl_start_epoch
         self.kl_alpha_increase_per_epoch = kl_alpha_increase_per_epoch
-    def on_epoch_end (self, epoch, logs={}):
+
+    def on_epoch_end(self, epoch, logs={}):
         if epoch >= self.kl_start_epoch - 2:
             new_kl_alpha = min(K.get_value(self.kl_alpha) + self.kl_alpha_increase_per_epoch, 1.)
             K.set_value(self.kl_alpha, new_kl_alpha)
-        print ("Current KL Weight is " + str(K.get_value(self.kl_alpha)))
+        print("Current KL Weight is " + str(K.get_value(self.kl_alpha)))

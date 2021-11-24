@@ -1,27 +1,27 @@
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, concatenate
-from tensorflow.keras.models import Model
+import tensorflow as tf
 import tensorflow_probability as tfp
+from tensorflow.keras.layers import Input, Conv3D, MaxPooling3D, UpSampling3D, concatenate
+from tensorflow.keras.models import Model
 
-from groupnorm import GroupNormalization
-from utils import normal_prior
+from bayesian_cnn_prometheus.learning.model.groupnorm import GroupNormalization
 
 
 def down_stage(inputs, filters, kernel_size=3,
                activation="relu", padding="SAME"):
-    conv = Conv2D(filters, kernel_size,
+    conv = Conv3D(filters, kernel_size,
                   activation=activation, padding=padding)(inputs)
     conv = GroupNormalization()(conv)
-    conv = Conv2D(filters, kernel_size,
+    conv = Conv3D(filters, kernel_size,
                   activation=activation, padding=padding)(conv)
     conv = GroupNormalization()(conv)
-    pool = MaxPooling2D()(conv)
+    pool = MaxPooling3D()(conv)
     return conv, pool
 
 
 def up_stage(inputs, skip, filters, prior_fn, kernel_size=3,
              activation="relu", padding="SAME"):
-    up = UpSampling2D()(inputs)
-    up = tfp.layers.Convolution2DFlipout(filters, 2,
+    up = UpSampling3D()(inputs)
+    up = tfp.layers.Convolution3DFlipout(filters, 2,
                                          activation=activation,
                                          padding=padding,
                                          kernel_prior_fn=prior_fn)(up)
@@ -30,12 +30,12 @@ def up_stage(inputs, skip, filters, prior_fn, kernel_size=3,
     merge = concatenate([skip, up])
     merge = GroupNormalization()(merge)
 
-    conv = tfp.layers.Convolution2DFlipout(filters, kernel_size,
+    conv = tfp.layers.Convolution3DFlipout(filters, kernel_size,
                                            activation=activation,
                                            padding=padding,
                                            kernel_prior_fn=prior_fn)(merge)
     conv = GroupNormalization()(conv)
-    conv = tfp.layers.Convolution2DFlipout(filters, kernel_size,
+    conv = tfp.layers.Convolution3DFlipout(filters, kernel_size,
                                            activation=activation,
                                            padding=padding,
                                            kernel_prior_fn=prior_fn)(conv)
@@ -46,23 +46,22 @@ def up_stage(inputs, skip, filters, prior_fn, kernel_size=3,
 
 def end_stage(inputs, prior_fn, kernel_size=3,
               activation="relu", padding="SAME"):
-    conv = tfp.layers.Convolution2DFlipout(1, kernel_size,
+    conv = tfp.layers.Convolution3DFlipout(1, kernel_size,
                                            activation=activation,
                                            padding="SAME",
                                            kernel_prior_fn=prior_fn)(inputs)
-    conv = tfp.layers.Convolution2DFlipout(1, 1, activation="sigmoid",
+    conv = tfp.layers.Convolution3DFlipout(1, 1, activation="sigmoid",
                                            kernel_prior_fn=prior_fn)(conv)
 
     return conv
 
 
-def bayesian_unet(input_shape=(280, 280, 1), kernel_size=3,
+def bayesian_vnet(input_shape=(280, 280, 280, 1), kernel_size=3,
                   activation="relu", padding="SAME", **kwargs):
     prior_std = kwargs.get("prior_std", 1)
     prior_fn = normal_prior(prior_std)
 
     inputs = Input(input_shape)
-
     conv1, pool1 = down_stage(inputs, 16,
                               kernel_size=kernel_size,
                               activation=activation,
@@ -99,3 +98,16 @@ def bayesian_unet(input_shape=(280, 280, 1), kernel_size=3,
                       padding=padding)
 
     return Model(inputs=inputs, outputs=conv8)
+
+
+def normal_prior(prior_std):
+    """Defines normal distribution prior for Bayesian neural network."""
+
+    def prior_fn(dtype, shape, name, trainable, add_variable_fn):
+        tfd = tfp.distributions
+        dist = tfd.Normal(loc=tf.zeros(shape, dtype),
+                          scale=dtype.as_numpy_dtype((prior_std)))
+        batch_ndims = tf.size(input=dist.batch_shape_tensor())
+        return tfd.Independent(dist, reinterpreted_batch_ndims=batch_ndims)
+
+    return prior_fn
