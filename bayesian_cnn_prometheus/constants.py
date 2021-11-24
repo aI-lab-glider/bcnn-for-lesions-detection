@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import bayesian_cnn_prometheus
+
 
 class DatasetType:
     TRAIN = 'train'
@@ -14,7 +16,7 @@ class DatasetTypeTargets:
 
 
 class Paths:
-    PROJECT_DIR = Path(__file__).parent
+    PROJECT_DIR = Path(bayesian_cnn_prometheus.__file__).parent
     DATA_DIR = PROJECT_DIR / "data"
 
     CONFIG_PATH = PROJECT_DIR / 'config.json'

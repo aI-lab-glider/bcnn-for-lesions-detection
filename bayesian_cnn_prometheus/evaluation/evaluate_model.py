@@ -12,7 +12,7 @@ def main():
     patient_id = image_path.split('.')[0].split('_')[-1]
 
     model_evaluator = BayesianModelEvaluator(weights_path, tuple([*config['chunk_size'], 1]))
-    predictions = model_evaluator.evaluate(image_path, config['mc_samples'], [32, 32, 16])
+    predictions = model_evaluator.evaluate(image_path, config['mc_samples'], config['stride'])
     model_evaluator.save_predictions(patient_id, predictions)
 
     results_visualizer = ResultsVisualizer()
