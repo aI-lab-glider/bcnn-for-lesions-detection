@@ -19,16 +19,16 @@ class BayesianModelEvaluator:
         self.input_shape = input_shape
         self.model = self.load_saved_model(weights_path)
 
-    def evaluate(self, image_path: str, samples_num: int, window: List[int]) -> List[np.array]:
+    def evaluate(self, image_path: str, samples_num: int, stride: List[int]) -> List[np.array]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image_path: path to the image to predict
         :param samples_num: number of samples to make
-        :param window: three-elements list with steps value to make in each axis
+        :param stride: three-elements list with steps value to make in each axis
         :return: list of arrays with samples_num predictions on image
         """
         image = load_nifti_file(image_path)
-        image_chunks, coords = self.create_chunks(image, window)
+        image_chunks, coords = self.create_chunks(image, stride)
 
         predictions = []
         for _ in tqdm(range(samples_num)):
@@ -40,14 +40,14 @@ class BayesianModelEvaluator:
                 chunk_pred = self.model.predict(reshaped_chunk)
                 reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
 
-                prediction[self._get_window(coord)] += reshaped_chunk_pred
-                count_prediction[self._get_window(coord)] += np.ones(chunk.shape)
+                prediction[self._get_stride(coord)] += reshaped_chunk_pred
+                count_prediction[self._get_stride(coord)] += np.ones(chunk.shape)
 
             predictions.append(prediction / np.maximum(count_prediction, 1))
 
         return predictions
 
-    def _get_window(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
+    def _get_stride(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
         return tuple([slice(coord_, coord_ + input_shape_) for (coord_, input_shape_) in zip(coord, self.input_shape)])
 
     @staticmethod
@@ -74,23 +74,23 @@ class BayesianModelEvaluator:
         model.load_weights(weights_path)
         return model
 
-    def create_chunks(self, array: np.array, window: List[int]) -> (List[np.array], List[Tuple[int, int, int]]):
+    def create_chunks(self, array: np.array, stride: List[int]) -> (List[np.array], List[Tuple[int, int, int]]):
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
-        :param window: three-elements list with steps value to make in each axis
+        :param stride: three-elements list with steps value to make in each axis
         :return: list of chunks and list of corresponding coordinates
         """
         origin_x, origin_y, origin_z = array.shape
         chunk_x, chunk_y, chunk_z, _ = self.input_shape
-        window_x, window_y, window_z = window
+        stride_x, stride_y, stride_z = stride
 
         chunks = []
         coords = []
 
-        for x in range(0, origin_x, window_x)[:-1]:
-            for y in range(0, origin_y, window_y)[:-1]:
-                for z in range(0, origin_z, window_z)[:-1]:
+        for x in range(0, origin_x, stride_x)[:-1]:
+            for y in range(0, origin_y, stride_y)[:-1]:
+                for z in range(0, origin_z, stride_z)[:-1]:
                     chunk = array[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
                     if chunk.shape == self.input_shape[:3]:
                         chunks.append(chunk)

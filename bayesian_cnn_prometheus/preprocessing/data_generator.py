@@ -19,7 +19,7 @@ class DataGenerator:
         self.image_loader = ImageLoader(preprocessing_config.get('transform_nifti_to_npy').get('ext'))
         # TODO ProxPxD: is there a need for the activation of chunking?
         self.chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
-        self.window = preprocessing_config.get('create_chunks').get('window')
+        self.stride = preprocessing_config.get('create_chunks').get('stride')
         self.data_splitter = DataSplitter(preprocessing_config.get('create_data_structure'),
                                           preprocessing_config.get('update_healthy_patients_indices'))
         self.dataset_structure = None
@@ -49,8 +49,8 @@ class DataGenerator:
             x_npy, y_npy = self.image_loader.load(image_index)
             x_npy_norm = DataGenerator._normalize(x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
-            for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size, self.window),
-                                        DataGenerator._generate_chunks(y_npy, self.chunk_size, self.window)):
+            for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
+                                        DataGenerator._generate_chunks(y_npy, self.chunk_size, self.stride)):
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
                 y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
@@ -62,21 +62,21 @@ class DataGenerator:
 
     @staticmethod
     def _generate_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16),
-                         window: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
+                         stride: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
         :param data_subset: single subset of data (or labels)
         :param chunk_size: size of 3d chunk (a, b, c) to train the model with them
-        :param window: three-elements tuple with steps value to make in each axis
+        :param stride: three-elements tuple with steps value to make in each axis
         :return: generator which produces chunks with size (a, b, c)
         """
         origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size
-        window_x, window_y, window_z = window
+        stride_x, stride_y, stride_z = stride
 
-        for x in range(0, origin_x, window_x)[:-1]:
-            for y in range(0, origin_y, window_y)[:-1]:
-                for z in range(0, origin_z, window_z)[:-1]:
+        for x in range(0, origin_x, stride_x)[:-1]:
+            for y in range(0, origin_y, stride_y)[:-1]:
+                for z in range(0, origin_z, stride_z)[:-1]:
                     chunk = data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
                     if chunk.shape == tuple(chunk_size):
                         yield chunk
