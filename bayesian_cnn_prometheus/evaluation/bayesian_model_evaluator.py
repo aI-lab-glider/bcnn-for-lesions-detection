@@ -97,18 +97,3 @@ class BayesianModelEvaluator:
                         coords.append((x, y, z))
 
         return chunks, coords
-
-    def add_chunk_to_array(self, array: np.array, chunk: np.array, coords: np.array) -> np.array:
-        """
-        Adds chunk to bigger array according to coordinates.
-        :param array: big array
-        :param chunk: small array, it should be added to the bigger one
-        :param coords: coordinates of big array where small array should be added
-        :return: big array with added small array
-        """
-
-        array[coords[0]:coords[0] + self.input_shape[0],
-        coords[1]:coords[1] + self.input_shape[1],
-        coords[2]:coords[2] + self.input_shape[2]] += chunk
-
-        return array

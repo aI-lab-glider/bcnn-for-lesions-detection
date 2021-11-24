@@ -20,7 +20,7 @@ class ImageLoader:
         :return: image and target as numpy arrays
         """
         image_file_path, target_file_path = self._get_files_names(image_index, 'nii.gz')
-        if self.extension == 'ni.gz':
+        if self.extension == 'nii.gz':
             npy_image = self._transform_nifti_to_npy(image_file_path)
             npy_target = self._transform_nifti_to_npy(target_file_path)
         elif self.extension == 'npy':
