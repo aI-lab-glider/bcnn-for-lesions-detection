@@ -1,3 +1,4 @@
+import json
 import numpy as np
 
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file # refactor idea: move this function to more 'general' directory
@@ -19,9 +20,10 @@ class CorrelationAnalyzer:
         self.cancer_mask = CorrelationAnalyzer.normalize(load_nifti_file(cancer_mask_path))
         self.metrics = {}
 
-    def perform_analysis(self, print_metrics: bool = False, plot_metrics: bool = False):
+    def perform_analysis(self, save_to_json: bool = False, print_metrics: bool = False, plot_metrics: bool = False):
         """
         Assigns the metrics describing cancer and variance correlation.
+        :param save_to_json: if True, save metrics to JSON file
         :param print_metrics: if True, prints all of the numeric metrics
         :param plot_metrics: if True, plots all of the displayable metrics
         """
@@ -35,11 +37,22 @@ class CorrelationAnalyzer:
         # self._assign_contingency_table()
         # self._assign_cross_correlate()
 
+        if save_to_json:
+            self._save_to_json()
+
         if print_metrics:
             self._print_metrics()
 
         if plot_metrics:
             self._plot_metrics()
+
+    def _save_to_json(self):
+        """
+        Saves metrics to a JSON file
+        """
+        if self.metrics:
+            with open('metrics.json', 'w') as f:
+                json.dump(self.metrics, f)
 
     def _print_metrics(self):
         """
