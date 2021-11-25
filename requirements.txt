@@ -9,3 +9,5 @@ sacred==0.7.5
 pymongo==3.8.0
 numpy~=1.19.5
 tqdm~=4.62.3
+scikit-image==0.18.3
+scipy==1.5.4
