@@ -12,6 +12,6 @@ setup(
         'brokenaxes==0.3.1',
         'pymongo==3.8.0',
         'numpy~=1.19.5',
-        'tqdm~=4.62.3'
-    ],
+        'tqdm~=4.62.3',
+    ]
 )
