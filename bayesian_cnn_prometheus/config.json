@@ -3,7 +3,7 @@
     "transform_nifti_to_npy": {
       "ext": "nii.gz"
     },
-    "update_healthy_patients_indices": false,
+    "update_healthy_patients_indices": true,
     "normalize_images": {
       "is_activated": true
     },

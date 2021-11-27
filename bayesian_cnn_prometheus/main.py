@@ -1,4 +1,5 @@
 import json
+from bayesian_cnn_prometheus.constants import Paths
 
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
@@ -23,7 +24,7 @@ def main():
 
 
 def get_config():
-    with open('config.json') as cf:
+    with open(Paths.PROJECT_DIR/'config.json') as cf:
         config = json.load(cf)
     return config
 
