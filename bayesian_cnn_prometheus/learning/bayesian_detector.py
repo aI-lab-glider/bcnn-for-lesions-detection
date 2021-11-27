@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Optional, Tuple, Dict
 
 import math
 import tensorflow as tf
@@ -33,7 +33,8 @@ class BayesianDetector:
 
         self._initial_epoch = config.get('initial_epoch')
         self._kl_start_epoch = config.get('kl_start_epoch')
-        self._kl_alpha_increase_per_epoch = config.get('kl_alpha_increase_per_epoch')
+        self._kl_alpha_increase_per_epoch = config.get(
+            'kl_alpha_increase_per_epoch')
         self._kl_alpha = self._adjust_kl_alpha(config.get('kl_alpha'))
 
         self._weights_path = config.get('weights_path')
@@ -42,7 +43,8 @@ class BayesianDetector:
         self._scheduler: LearningRateScheduler = None
         self._annealer: Callback = None
         self._kl_start_epoch: int = config.get('kl_start_epoch')
-        self._kl_alpha_increase_per_epoch: float = config.get('kl_alpha_increase_per_epoch')
+        self._kl_alpha_increase_per_epoch: float = config.get(
+            'kl_alpha_increase_per_epoch')
 
         # For fitting
         self._lr_decay_start_epoch = config.get('lr_decay_start_epoch')
@@ -60,16 +62,21 @@ class BayesianDetector:
         self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
                                     padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
-        loss_function = variational_free_energy_loss(self._model, train_len / self._batch_size, self._kl_alpha)
-        self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
+        loss_function = variational_free_energy_loss(
+            self._model, train_len / self._batch_size, self._kl_alpha)
+        self._model.compile(loss=loss_function,
+                            optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
-        self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)
+        self._checkpoint_path = BayesianDetector._get_paths(
+            'bayesian', self._weights_dir)
         self._checkpointer = ModelCheckpoint(str(self._checkpoint_path), verbose=1, save_weights_only=True,
                                              save_best_only=True, )
-        self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
+        self._scheduler = LearningRateScheduler(
+            BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
         self._annealer = Callback() if self._kl_alpha is None else \
-            AnnealingCallback(self._kl_alpha, self._kl_start_epoch, self._kl_alpha_increase_per_epoch)
+            AnnealingCallback(self._kl_alpha, self._kl_start_epoch,
+                              self._kl_alpha_increase_per_epoch)
 
     def _adjust_kl_alpha(self, kl_alpha: int):
         if kl_alpha is None:
@@ -83,13 +90,15 @@ class BayesianDetector:
     def fit(self, training_dataset, validation_dataset):
         print('Fitting the model...')
         self._model.fit(x=training_dataset, epochs=self._epochs, initial_epoch=self._initial_epoch,
-                        callbacks=[self._checkpointer, self._scheduler, self._annealer],
+                        callbacks=[self._checkpointer,
+                                   self._scheduler, self._annealer],
                         validation_data=validation_dataset.repeat(), validation_steps=self._validation_steps)
 
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
         Path(weights_dir).mkdir(parents=True, exist_ok=True)
-        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.0f}.h5")
+        checkpoint_path = Path(
+            weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.0f}.h5")
         return checkpoint_path
 
     @staticmethod
@@ -102,7 +111,8 @@ class BayesianDetector:
 
         def schedule(epoch: int, initial_learning_rate: float):
             if epoch >= lr_decay_start_epoch:
-                initial_learning_rate *= math.exp((10 * initial_learning_rate) * (lr_decay_start_epoch - epoch))
+                initial_learning_rate *= math.exp(
+                    (10 * initial_learning_rate) * (lr_decay_start_epoch - epoch))
             return initial_learning_rate
 
         return schedule

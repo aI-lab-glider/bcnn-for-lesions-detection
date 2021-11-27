@@ -11,11 +11,14 @@ class ResultsVisualizer:
     def __init__(self):
         ...
 
-    def visualize_patient_results(self, patient_id: str, predictions: np.array, slice_number: int,
+    def visualize_patient_results(self, patient_id: str, predictions: np.ndarray, slice_number: int,
                                   save_variance: bool = False):
-        image_file_path = str(Paths.IMAGE_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
-        mask_file_path = str(Paths.MASK_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
-        reference_file_path = str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
+        image_file_path = str(Paths.IMAGE_FILE_PATTERN_PATH).format(
+            f'{patient_id:0>4}', 'nii.gz')
+        mask_file_path = str(Paths.MASK_FILE_PATTERN_PATH).format(
+            f'{patient_id:0>4}', 'nii.gz')
+        reference_file_path = str(
+            Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_PATH).format(f'{patient_id:0>4}', 'nii.gz')
 
         image = load_nifti_file(image_file_path)
         mask = load_nifti_file(mask_file_path)
@@ -25,25 +28,29 @@ class ResultsVisualizer:
         segmentation_variance = self.get_segmentation_variance(predictions)
 
         if save_variance:
-            segmentation_variance_path = Paths.RESULTS_PATH / Path(f'SEGMENTATION_VARIANCE_{patient_id}.nii.gz')
+            segmentation_variance_path = Paths.RESULTS_PATH / \
+                Path(f'SEGMENTATION_VARIANCE_{patient_id:0>4}.nii.gz')
             save_as_nifti(segmentation_variance, segmentation_variance_path)
 
         self.plot_segmentations(image, reference, mask, segmentation_from_mean, segmentation_variance, patient_id,
                                 slice_number)
 
     @staticmethod
-    def plot_segmentations(image, reference, mask, segmentation_from_mean: np.array, segmentation_variance: np.array,
+    def plot_segmentations(image, reference, mask, segmentation_from_mean: np.ndarray, segmentation_variance: np.ndarray,
                            patient_id, slice_number):
         fig = plt.figure(constrained_layout=False)
-        fig.suptitle(f'Patient: {patient_id}, slice number: {slice_number}', fontsize=14, fontweight='bold')
+        fig.suptitle(
+            f'Patient: {patient_id}, slice number: {slice_number}', fontsize=14, fontweight='bold')
         fig.set_figheight(10)
         fig.set_figwidth(10)
 
-        grid = fig.add_gridspec(nrows=6, ncols=4, left=0.1, right=0.9, wspace=0.1, hspace=0.4)
+        grid = fig.add_gridspec(
+            nrows=6, ncols=4, left=0.1, right=0.9, wspace=0.1, hspace=0.4)
 
         image_ax = fig.add_subplot(grid[:2, 1:3])
         image_ax.set_title('CT Scan')
-        image_ax.imshow(get_standardized_slice(image, slice_number), cmap='gray')
+        image_ax.imshow(get_standardized_slice(
+            image, slice_number), cmap='gray')
         image_ax.axis('off')
 
         reference_ax = fig.add_subplot(grid[2:4, :2])
@@ -54,7 +61,8 @@ class ResultsVisualizer:
 
         segmentation_from_mean_ax = fig.add_subplot(grid[2:4, 2:])
         segmentation_from_mean_ax.set_title('Predicted Segmentation Mean')
-        segmentation_from_mean_ax.imshow(get_standardized_slice(segmentation_from_mean, slice_number), cmap='gray')
+        segmentation_from_mean_ax.imshow(get_standardized_slice(
+            segmentation_from_mean, slice_number), cmap='gray')
         segmentation_from_mean_ax.axis('off')
 
         mask_ax = fig.add_subplot(grid[4:, :2])
@@ -64,12 +72,16 @@ class ResultsVisualizer:
 
         segmentation_variance_ax = fig.add_subplot(grid[4:, 2:])
         segmentation_variance_ax.set_title('Predicted Segmentation Variance')
-        segmentation_variance = get_standardized_slice(segmentation_variance, slice_number)
-        segmentation_variance_masked = np.multiply(segmentation_variance, np.array(reference, dtype=bool))
-        segmentation_variance_ax.imshow(segmentation_variance_masked, cmap='gray')
+        segmentation_variance = get_standardized_slice(
+            segmentation_variance, slice_number)
+        segmentation_variance_masked = np.multiply(
+            segmentation_variance, np.array(reference, dtype=bool))
+        segmentation_variance_ax.imshow(
+            segmentation_variance_masked, cmap='gray')
         segmentation_variance_ax.axis('off')
 
-        plt.savefig(str(Paths.SUMMARY_FILE_PATTERN_PATH).format(patient_id, str(slice_number), 'png'))
+        plt.savefig(str(Paths.SUMMARY_FILE_PATTERN_PATH).format(
+            patient_id, str(slice_number), 'png'))
 
     @staticmethod
     def get_segmentation_from_mean(predictions, threshold=0.463):

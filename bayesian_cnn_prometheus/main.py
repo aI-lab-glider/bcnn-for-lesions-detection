@@ -1,23 +1,24 @@
 import json
 
-from bayesian_cnn_prometheus.constants import BATCH_SIZE, CHUNK_SIZE
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
 
-def main():  # TODO ProxPxD find a proper name
+def main():
     config = get_config()
     preprocessing_config = config.get('preprocessing')
-    batch_size = config.get(BATCH_SIZE)  # 1config
-    chunk_size = preprocessing_config.get('create_chunks').get(CHUNK_SIZE)  # 1config
+    batch_size = config.get('batch_size')
+    chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
 
-    data_loader = DataLoader(config.get('preprocessing'), batch_size, chunk_size)
+    data_loader = DataLoader(config.get(
+        'preprocessing'), batch_size, chunk_size)
     data_loader.load_data()
 
     training_dataset = data_loader.get_train_data()
     validation_dataset = data_loader.get_valid_data()
 
-    detector = BayesianDetector(config, batch_size, BayesianDetector.get_input_shape(training_dataset))
+    detector = BayesianDetector(
+        config, batch_size, BayesianDetector.get_input_shape(training_dataset))
     detector.fit(training_dataset, validation_dataset)
 
 

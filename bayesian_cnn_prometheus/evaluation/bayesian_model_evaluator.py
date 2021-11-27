@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Tuple, List
 
 import numpy as np
@@ -5,7 +6,7 @@ from tensorflow.python.keras.engine.training import Model
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti
+from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import bayesian_vnet
 
 
@@ -28,6 +29,7 @@ class BayesianModelEvaluator:
         :return: list of arrays with samples_num predictions on image
         """
         image = load_nifti_file(image_path)
+        image = standardize_image(image)
         image_chunks, coords = self.create_chunks(image, stride)
 
         predictions = []
@@ -41,7 +43,8 @@ class BayesianModelEvaluator:
                 reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
 
                 prediction[self._get_stride(coord)] += reshaped_chunk_pred
-                count_prediction[self._get_stride(coord)] += np.ones(chunk.shape)
+                count_prediction[self._get_stride(
+                    coord)] += np.ones(chunk.shape)
 
             predictions.append(prediction / np.maximum(count_prediction, 1))
 
@@ -57,8 +60,9 @@ class BayesianModelEvaluator:
         :param patient_id: four-digit patient id
         :param predictions: list of arrays with predictions
         """
-        predictions_path = str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(patient_id, 'nii.gz')
-        save_as_nifti(np.array(predictions), predictions_path)
+        predictions_path = str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(
+            patient_id, 'nii.gz')
+        save_as_nifti(np.array(predictions), Path(predictions_path))
 
     def load_saved_model(self, weights_path: str) -> Model:
         """
@@ -74,7 +78,7 @@ class BayesianModelEvaluator:
         model.load_weights(weights_path)
         return model
 
-    def create_chunks(self, array: np.array, stride: List[int]) -> (List[np.array], List[Tuple[int, int, int]]):
+    def create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)

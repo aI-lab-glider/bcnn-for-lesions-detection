@@ -41,7 +41,7 @@ python3.6 -m venv venv
 source venv/bin/activate
 
 pip install --upgrade pip
-pip3 install -r requirements.txt
+pip3 install -e .
 
 python3.6 $1
 

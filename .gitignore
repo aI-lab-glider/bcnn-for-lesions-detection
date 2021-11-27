@@ -8,3 +8,4 @@ data/
 nifti/
 network/weights/
 .vscode/
+*.egg-info

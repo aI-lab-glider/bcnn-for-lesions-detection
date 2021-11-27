@@ -13,12 +13,11 @@ from bayesian_cnn_prometheus.constants import DatasetType, Paths
 class DataSplitter:
 
     def __init__(self, data_structure_config: Dict, should_update_healthy_patience_indices=True):
-        # TODO ProxPxD - description
         """
         Creates PreprocessingPipeline class to preprocess input data according to the config.
         :param config: structure with configuration to use in preprocessing in learning
         """
-        self.config = data_structure_config  # .get('preprocessing', {})  # ProxPxD
+        self.config = data_structure_config
         self.should_update_healthy_patience_indices = should_update_healthy_patience_indices
 
     def split_indices(self) -> dict:
@@ -26,11 +25,13 @@ class DataSplitter:
         Divides indices into train, valid and test part.
         :return: dict with dataset types and their indices
         """
-        patients_indices_to_train = self._get_indices_for_training()  # ProxPxD
+        patients_indices_to_train = self._get_indices_for_training()
         patients_number = len(patients_indices_to_train)
-        parts_sum = self.config['train_part'] + self.config['valid_part'] + self.config['test_part']
+        parts_sum = self.config['train_part'] + \
+            self.config['valid_part'] + self.config['test_part']
 
-        valid_part = int(self.config['valid_part'] * patients_number / parts_sum)
+        valid_part = int(self.config['valid_part']
+                         * patients_number / parts_sum)
         valid_indices_len = max(valid_part, 1)
 
         test_part = int(self.config['test_part'] * patients_number / parts_sum)
@@ -41,8 +42,9 @@ class DataSplitter:
         return {
             DatasetType.TRAIN: patients_indices_to_train[:train_indices_len],
             DatasetType.VALID: patients_indices_to_train[
-                               train_indices_len: train_indices_len + valid_indices_len],
-            DatasetType.TEST: patients_indices_to_train[train_indices_len + valid_indices_len:]
+                train_indices_len: train_indices_len + valid_indices_len],
+            DatasetType.TEST: patients_indices_to_train[train_indices_len +
+                                                        valid_indices_len:]
         }
 
     def _get_indices_for_training(self) -> List[str]:
@@ -51,8 +53,7 @@ class DataSplitter:
         Uses healthy_patient_indices.json file as a cache.
         :return: list of patients indices
         """
-
-        # ProxPxD idea: a file of paths that are being used in preprocessing module
+        # TODO: Fix me.
         healthy_patients_indices_json_path = Path(
             bayesian_cnn_prometheus.preprocessing.__file__).parent / 'healthy_patients_indices.json'
         with open(healthy_patients_indices_json_path, 'r') as hf:
@@ -74,9 +75,12 @@ class DataSplitter:
         Finds indices of healthy patients scans in dataset.
         :return: list of indices
         """
-        masks_paths = glob.glob(str(Paths.MASK_FILE_PATTERN_PATH).format('*', 'nii.gz'))
-        healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
-        healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
+        masks_paths = glob.glob(
+            str(Paths.MASK_FILE_PATTERN_PATH).format('*', 'nii.gz'))
+        healthy_masks_paths = [
+            target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
+        healthy_patients_indices = [self._get_patient_index(
+            mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
 
     @staticmethod
