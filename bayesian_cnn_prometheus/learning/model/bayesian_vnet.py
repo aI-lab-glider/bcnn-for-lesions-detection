@@ -46,18 +46,18 @@ def up_stage(inputs, skip, filters, prior_fn, kernel_size=3,
 
 def end_stage(inputs, prior_fn, kernel_size=3,
               activation="relu", padding="SAME"):
-    conv = tfp.layers.Convolution3DFlipout(1, kernel_size,
-                                           activation=activation,
-                                           padding="SAME",
-                                           kernel_prior_fn=prior_fn)(inputs)
+    conv1 = tfp.layers.Convolution3DFlipout(1, kernel_size,
+                                            activation=activation,
+                                            padding="SAME",
+                                            kernel_prior_fn=prior_fn)(inputs)
     conv = tfp.layers.Convolution3DFlipout(1, 1, activation="sigmoid",
-                                           kernel_prior_fn=prior_fn)(conv)
+                                           kernel_prior_fn=prior_fn)(conv1)
 
     return conv
 
 
 def bayesian_vnet(input_shape=(280, 280, 280, 1), kernel_size=3,
-                  activation="relu", padding="SAME", **kwargs):
+                  activation="relu", padding="SAME", **kwargs) -> Model:
     prior_std = kwargs.get("prior_std", 1)
     prior_fn = normal_prior(prior_std)
 
