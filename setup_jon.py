@@ -1,5 +1,6 @@
 from setuptools import setup
 
+# Run with python setup_jon.py develop
 setup(
     name='JON - bayesian unet CLi',
     version='1.0.0',
