@@ -8,9 +8,9 @@
       "is_activated": true
     },
     "create_data_structure": {
-      "train_part": 7,
-      "valid_part": 2,
-      "test_part": 1
+      "train_part": 20,
+      "valid_part": 10,
+      "test_part": 5
     },
     "create_chunks": {
       "is_activated": true,
