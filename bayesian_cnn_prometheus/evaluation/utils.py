@@ -19,8 +19,8 @@ def get_standardized_slice(array: np.ndarray, slice_number: int) -> np.ndarray:
     return standardize_image(array[:, :, slice_number])
 
 
-def save_as_nifti(array: np.ndarray, nifti_path: Path, affine=np.eye(4)) -> None:
+def save_as_nifti(array: np.ndarray, nifti_path: Path, affine=np.eye(4), header=None) -> None:
     if not nifti_path.parent.exists():
         nifti_path.parent.mkdir(parents=True)
-    nifti_array = nib.Nifti1Image(array, affine)
-    nib.save(nifti_array, nifti_path)
+    nifti_img = nib.Nifti1Image(array, affine, header=header)
+    nib.save(nifti_img, nifti_path)

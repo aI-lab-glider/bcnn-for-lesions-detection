@@ -21,7 +21,7 @@ class BayesianModelEvaluator:
         self.input_shape = input_shape
         self.model = self.load_saved_model(weights_path)
 
-    def evaluate(self, image_path: str, samples_num: int, stride: List[int]) -> List[np.array]:
+    def evaluate(self, image_path: str, samples_num: int, stride: List[int]) -> List[np.ndarray]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image_path: path to the image to predict
@@ -31,8 +31,7 @@ class BayesianModelEvaluator:
         """
         image = load_nifti_file(image_path)
         image = standardize_image(image)
-        image_chunks, coords = self.create_chunks(image, stride)
-
+        image_chunks, coords = self._create_chunks(image, stride)
         predictions = []
         for _ in tqdm(range(samples_num)):
             prediction = np.zeros(image.shape)
@@ -48,38 +47,9 @@ class BayesianModelEvaluator:
                     coord)] += np.ones(chunk.shape)
 
             predictions.append(prediction / np.maximum(count_prediction, 1))
-
         return predictions
 
-    def _get_stride(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
-        return tuple([slice(coord_, coord_ + input_shape_) for (coord_, input_shape_) in zip(coord, self.input_shape)])
-
-    @staticmethod
-    def save_predictions(patient_id, predictions) -> None:
-        """
-        Saves predictions list in nifti file.
-        :param patient_id: four-digit patient id
-        :param predictions: list of arrays with predictions
-        """
-        predictions_path = str(Paths.PREDICTIONS_FILE_PATTERN_PATH).format(
-            patient_id, 'nii.gz')
-        save_as_nifti(np.array(predictions), Path(predictions_path))
-
-    def load_saved_model(self, weights_path: str) -> Model:
-        """
-        Loads bayesian model.
-        :param weights_path: path to bayesian model weights in h5 format
-        :return: keras model with loaded weights
-        """
-        model = bayesian_vnet(self.input_shape,
-                              kernel_size=3,
-                              activation='relu',
-                              padding='SAME',
-                              prior_std=1)
-        model.load_weights(weights_path)
-        return model
-
-    def create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
+    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
@@ -102,3 +72,48 @@ class BayesianModelEvaluator:
                         coords.append((x, y, z))
 
         return chunks, coords
+
+    def _get_stride(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
+        return tuple([slice(coord_, coord_ + input_shape_) for (coord_, input_shape_) in zip(coord, self.input_shape)])
+
+    @classmethod
+    def save_predictions(cls, patient_id, predictions, affine: np.ndarray, nifti_header) -> None:
+        """
+        Saves predictions list in nifti file.
+        :param patient_id: four-digit patient id
+        :param predictions: list of arrays with predictions
+        """
+        predictions = np.array(predictions)
+        segmentation = cls.get_segmentation_from_mean(predictions)
+        variance = cls.get_segmentation_variance(predictions)
+        predictions_path = str(Paths.SUMMARY_FILE_PATTERN_PATH).format(
+            patient_id, 'nii.gz')
+        save_as_nifti(segmentation, Path(
+            predictions_path), affine, nifti_header)
+        save_as_nifti(variance, Path(str(Paths.VARIANCE_FILE_PATTERN_PATH).format(
+            patient_id, 'nii.gz')), affine, nifti_header)
+
+    @staticmethod
+    def get_segmentation_from_mean(predictions, threshold=0.463):
+        segmentation = np.mean(predictions, axis=0)
+        # segmentation[segmentation > threshold] = 1.
+        # segmentation[segmentation <= threshold] = 0.
+        return segmentation
+
+    @staticmethod
+    def get_segmentation_variance(predictions):
+        return np.var(predictions, axis=0)
+
+    def load_saved_model(self, weights_path: str) -> Model:
+        """
+        Loads bayesian model.
+        :param weights_path: path to bayesian model weights in h5 format
+        :return: keras model with loaded weights
+        """
+        model = bayesian_vnet(self.input_shape,
+                              kernel_size=3,
+                              activation='relu',
+                              padding='SAME',
+                              prior_std=1)
+        model.load_weights(weights_path)
+        return model
