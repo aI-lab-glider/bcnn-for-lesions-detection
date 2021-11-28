@@ -71,13 +71,14 @@ class BayesianDetector:
 
     def _create_model(self, input_shape: Tuple[int, ...]):
         train_len = self._calculate_train_len()
-        self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
-                                    padding=self._padding, prior_std=self._prior_std)
-        self._model.summary(line_length=127)
+        model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
+                              padding=self._padding, prior_std=self._prior_std)
+        model.summary(line_length=127)
         loss_function = variational_free_energy_loss(
-            self._model, train_len / self._batch_size, self._kl_alpha)
-        self._model.compile(loss=loss_function,
-                            optimizer=Adam(), metrics=["accuracy"])
+            model, train_len / self._batch_size, self._kl_alpha)
+        model.compile(loss=loss_function,
+                      optimizer=Adam(), metrics=["accuracy"])
+        return model
 
     def _initialize_callbacks(self):
         self._checkpoint_path = BayesianDetector._get_paths(
