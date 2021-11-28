@@ -82,14 +82,3 @@ class ResultsVisualizer:
 
         plt.savefig(str(Paths.SUMMARY_FILE_PATTERN_PATH).format(
             patient_id, str(slice_number), 'png'))
-
-    @staticmethod
-    def get_segmentation_from_mean(predictions, threshold=0.463):
-        segmentation = np.mean(predictions, axis=0)
-        segmentation[segmentation > threshold] = 1.
-        segmentation[segmentation <= threshold] = 0.
-        return segmentation
-
-    @staticmethod
-    def get_segmentation_variance(predictions):
-        return np.var(predictions, axis=0)

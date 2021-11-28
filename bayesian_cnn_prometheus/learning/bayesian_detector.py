@@ -56,9 +56,21 @@ class BayesianDetector:
         self._initialize_model(input_shape)
         self._initialize_callbacks()
 
-    def _initialize_model(self, input_shape: Tuple[int, ...]):
-        train_len = self._calculate_train_len()
+    @property
+    def should_continue_training(self):
+        return self._weights_path is not None
 
+    def _initialize_model(self, input_shape: Tuple[int, ...]):
+        if self.should_continue_training:
+            self._model = self._load_model()
+        else:
+            self._model = self._create_model(input_shape)
+
+    def _load_model(self):
+        return tf.keras.models.load_model(self._weights_path)
+
+    def _create_model(self, input_shape: Tuple[int, ...]):
+        train_len = self._calculate_train_len()
         self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
                                     padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
