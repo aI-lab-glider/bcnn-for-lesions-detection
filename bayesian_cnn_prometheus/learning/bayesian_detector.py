@@ -55,10 +55,9 @@ class BayesianDetector:
 
     def _initialize_model(self, input_shape: Tuple[int, ...]):
         self._model = BayesianVnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
-                                   padding=self._padding, prior_std=self._prior_std)
+                                    padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
-        self._model(tf.ones((self._batch_size, *input_shape)))
-        loss_function = variational_free_energy_loss(self._model, 100 / self._batch_size, self._kl_alpha)
+        loss_function = variational_free_energy_loss(self._kl_alpha)
         self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
@@ -87,7 +86,7 @@ class BayesianDetector:
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
         Path(weights_dir).mkdir(parents=True, exist_ok=True)
-        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.3f}.h5")
+        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_accuracy:.3f}-{val_loss:.0f}.h5")
         return checkpoint_path
 
     @staticmethod
