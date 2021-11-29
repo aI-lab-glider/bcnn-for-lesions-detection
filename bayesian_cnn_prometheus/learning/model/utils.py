@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
+from tensorflow.python.keras.losses import kl_divergence
 
 
 def round_down(num, factor):
@@ -33,26 +34,25 @@ def absolute_file_paths(directory, match=""):
         break
     return paths
 
+
 def standardize(raw):
     """Transforms data to have mean 0 and std 1."""
 
     return (raw - np.mean(raw)) / np.std(raw)
 
-def variational_free_energy_loss(model, scale_factor, kl_alpha):
-    """Defines variational free energy loss.
 
+def variational_free_energy_loss(kl_alpha):
+    """
+    Defines variational free energy loss.
     Sum of KL divergence (supplied by tfp) and binary cross-entropy.
     """
-
-    # KL Divergence should be applied once per epoch only, so
-    # scale_factor should be num_samples / batch_size.
-    kl = sum(model.losses) / scale_factor
-
     def loss(y_true, y_pred):
         bce = binary_crossentropy(y_true, y_pred)
+        kl = kl_divergence(y_true, y_pred)
         return bce + K.get_value(kl_alpha) * kl
 
     return loss
+
 
 def get_latest_file(directory, match=""):
     """Gets the absolute file path of the last modified file in a directory.
