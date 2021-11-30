@@ -14,6 +14,7 @@
     },
     "create_chunks": {
       "is_activated": true,
+      "chunks_number": 50,
       "chunk_size": [
         64,
         64,

@@ -1,4 +1,5 @@
 import functools
+import random
 from typing import Dict, Generator
 
 import numpy as np
@@ -20,6 +21,7 @@ class DataGenerator:
             "normalize_images").get("is_activated")
         self.image_loader = ImageLoader(
             preprocessing_config.get('transform_nifti_to_npy').get('ext'))
+        self.chunks_number = preprocessing_config.get('create_chunks').get('chunks_number')
         self.chunk_size = preprocessing_config.get(
             'create_chunks').get('chunk_size')
         self.stride = preprocessing_config.get('create_chunks').get('stride')
@@ -64,8 +66,7 @@ class DataGenerator:
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
-    @staticmethod
-    def _generate_chunks(data_subset: np.ndarray, chunk_size: tuple = (32, 32, 16),
+    def _generate_chunks(self, data_subset: np.ndarray, chunk_size: tuple = (32, 32, 16),
                          stride: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
@@ -74,17 +75,19 @@ class DataGenerator:
         :param stride: three-elements tuple with steps value to make in each axis
         :return: generator which produces chunks with size (a, b, c)
         """
-        origin_x, origin_y, origin_z = data_subset.shape
-        chunk_x, chunk_y, chunk_z = chunk_size
-        stride_x, stride_y, stride_z = stride
+        for _ in range(self.chunks_number):
+            chunk_x, chunk_y, chunk_z = chunk_size
+            x, y, z = self._get_random_chunk_coords(data_subset, stride)
+            yield data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
 
-        for x in range(0, origin_x, stride_x)[:-1]:
-            for y in range(0, origin_y, stride_y)[:-1]:
-                for z in range(0, origin_z, stride_z)[:-1]:
-                    chunk = data_subset[x:x + chunk_x,
-                                        y:y + chunk_y, z:z + chunk_z]
-                    if chunk.shape == tuple(chunk_size):
-                        yield chunk
+    @staticmethod
+    def _get_random_chunk_coords(data_subset, stride):
+        origin_x, origin_y, origin_z = data_subset.shape
+        stride_x, stride_y, stride_z = stride
+        x = random.sample(range(0, origin_x, stride_x)[1:-1], k=1)[0]
+        y = random.sample(range(0, origin_y, stride_y)[1:-1], k=1)[0]
+        z = random.sample(range(0, origin_z, stride_z)[1:-1], k=1)[0]
+        return x, y, z
 
     @staticmethod
     def _normalize(image: np.ndarray) -> np.ndarray:
