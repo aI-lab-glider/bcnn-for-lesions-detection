@@ -40,5 +40,5 @@
   "initial_epoch": 0,
   "batch_size": 8,
   "lr_decay_start_epoch": 10,
-  "mc_samples": 10
+  "mc_samples": 5
 }
