@@ -1,5 +1,6 @@
 import functools
 import random
+from itertools import product
 from typing import Dict, Generator
 
 import numpy as np
@@ -21,7 +22,6 @@ class DataGenerator:
             "normalize_images").get("is_activated")
         self.image_loader = ImageLoader(
             preprocessing_config.get('transform_nifti_to_npy').get('ext'))
-        self.chunks_number = preprocessing_config.get('create_chunks').get('chunks_number')
         self.chunk_size = preprocessing_config.get(
             'create_chunks').get('chunk_size')
         self.stride = preprocessing_config.get('create_chunks').get('stride')
@@ -75,21 +75,25 @@ class DataGenerator:
         :param stride: three-elements tuple with steps value to make in each axis
         :return: generator which produces chunks with size (a, b, c)
         """
-        for _ in range(self.chunks_number):
-            chunk_x, chunk_y, chunk_z = chunk_size
-            x, y, z = self._get_random_chunk_coords(data_subset, stride)
+        chunk_x, chunk_y, chunk_z = chunk_size
+
+        for x, y, z in self._get_random_chunk_coords(data_subset, stride):
             chunk = data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
             if chunk.shape == tuple(chunk_size):
                 yield chunk
 
+    def _get_random_chunk_coords(self, data_subset, stride):
+        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, stride)
+                                        for origin_shape, stride in zip(data_subset.shape, stride)]
+
+        for coords in product(x_coords, y_coords, z_coords):
+            yield coords
+
     @staticmethod
-    def _get_random_chunk_coords(data_subset, stride):
-        origin_x, origin_y, origin_z = data_subset.shape
-        stride_x, stride_y, stride_z = stride
-        x = random.sample(range(0, origin_x, stride_x)[1:-1], k=1)[0]
-        y = random.sample(range(0, origin_y, stride_y)[1:-1], k=1)[0]
-        z = random.sample(range(0, origin_z, stride_z)[1:-1], k=1)[0]
-        return x, y, z
+    def _get_axis_coords_list(origin_shape, stride):
+        coords = list(range(stride, origin_shape - stride, stride))
+        random.shuffle(coords)
+        return coords
 
     @staticmethod
     def _normalize(image: np.ndarray) -> np.ndarray:
