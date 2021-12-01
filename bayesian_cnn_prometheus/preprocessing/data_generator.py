@@ -55,8 +55,8 @@ class DataGenerator:
             x_npy_norm = DataGenerator._normalize(
                 x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
-            for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
-                                        DataGenerator._generate_chunks(y_npy, self.chunk_size, self.stride)):
+            for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
+                                        self._generate_chunks(y_npy, self.chunk_size, self.stride)):
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
                 y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
@@ -78,7 +78,9 @@ class DataGenerator:
         for _ in range(self.chunks_number):
             chunk_x, chunk_y, chunk_z = chunk_size
             x, y, z = self._get_random_chunk_coords(data_subset, stride)
-            yield data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
+            chunk = data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
+            if chunk.shape == tuple(chunk_size):
+                yield chunk
 
     @staticmethod
     def _get_random_chunk_coords(data_subset, stride):
