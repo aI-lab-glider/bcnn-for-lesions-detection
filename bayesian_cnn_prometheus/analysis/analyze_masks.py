@@ -1,12 +1,13 @@
-from bayesian_cnn_prometheus.analysis.correlation_analyzer import CorrelationAnalyzer
+from bayesian_cnn_prometheus.analysis.masks_analyzer import MasksAnalyzer
 
 
 def main():
-    variance_mask_path = None
-    lesion_mask_path = None
+    model_name = None
+    lesion_masks_path = None
+    variance_masks_path = None
 
-    correlation_analyzer = CorrelationAnalyzer(variance_mask_path, lesion_mask_path)
-    correlation_analyzer.perform_analysis(print_metrics=True)
+    mask_analyzer = MasksAnalyzer(model_name, lesion_masks_path, variance_masks_path)
+    mask_analyzer.perform_analysis(save_to_json=True)
 
 
 if __name__ == '__main__':
