@@ -1,3 +1,4 @@
+import nibabel as nib
 from pathlib import Path
 from typing import Tuple, List
 
@@ -11,13 +12,13 @@ from bayesian_cnn_prometheus.learning.model.bayesian_vnet import bayesian_vnet
 
 
 class BayesianModelEvaluator:
-    def __init__(self, weights_path: str, input_shape: Tuple = (32, 32, 16, 1)):
+    def __init__(self, weights_path: str, chunk_size: Tuple = (32, 32, 16)):
         """
         Creates BayesianModelEvaluator object to evaluate bayesian model.
         :param weights_path: path to bayesian model weights in h5 format
-        :param input_shape: shape of the input to the model
+        :param chunk_size: shape of the input to the model
         """
-        self.input_shape = input_shape
+        self.chunk_size = chunk_size
         self.model = self.load_saved_model(weights_path)
 
     def evaluate(self, image_path: str, samples_num: int, stride: List[int]) -> List[np.ndarray]:
@@ -41,10 +42,9 @@ class BayesianModelEvaluator:
                 chunk_pred = self.model.predict(reshaped_chunk)
                 reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
 
-                prediction[self._get_stride(coord)] += reshaped_chunk_pred
-                count_prediction[self._get_stride(
+                prediction[self._get_window(coord)] += reshaped_chunk_pred
+                count_prediction[self._get_window(
                     coord)] += np.ones(chunk.shape)
-
             predictions.append(prediction / np.maximum(count_prediction, 1))
         return predictions
 
@@ -56,7 +56,6 @@ class BayesianModelEvaluator:
         :return: list of chunks and list of corresponding coordinates
         """
         origin_x, origin_y, origin_z = array.shape
-        chunk_x, chunk_y, chunk_z, _ = self.input_shape
         stride_x, stride_y, stride_z = stride
 
         chunks = []
@@ -65,15 +64,15 @@ class BayesianModelEvaluator:
         for x in range(0, origin_x, stride_x)[:-1]:
             for y in range(0, origin_y, stride_y)[:-1]:
                 for z in range(0, origin_z, stride_z)[:-1]:
-                    chunk = array[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
-                    if chunk.shape == self.input_shape[:3]:
+                    chunk = array[self._get_window((x, y, z))]
+                    if chunk.shape == self.chunk_size[:3]:
                         chunks.append(chunk)
                         coords.append((x, y, z))
 
         return chunks, coords
 
-    def _get_stride(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
-        return tuple([slice(coord_, coord_ + input_shape_) for (coord_, input_shape_) in zip(coord, self.input_shape)])
+    def _get_window(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
+        return tuple([slice(dim_start, dim_start + chunk_dim) for (dim_start, chunk_dim) in zip(coord, self.chunk_size[:3])])
 
     @classmethod
     def save_predictions(cls, patient_id, predictions, affine: np.ndarray, nifti_header) -> None:
@@ -109,7 +108,7 @@ class BayesianModelEvaluator:
         :param weights_path: path to bayesian model weights in h5 format
         :return: keras model with loaded weights
         """
-        model = bayesian_vnet(self.input_shape,
+        model = bayesian_vnet((*self.chunk_size, 1),
                               kernel_size=3,
                               activation='relu',
                               padding='SAME',
