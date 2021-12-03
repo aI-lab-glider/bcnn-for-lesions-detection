@@ -66,32 +66,32 @@ class DataGenerator:
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
-    def _generate_chunks(self, data_subset: np.ndarray, chunk_size: tuple = (32, 32, 16),
+    def _generate_chunks(self, dataset: np.ndarray, chunk_size: tuple = (32, 32, 16),
                          stride: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
-        :param data_subset: single subset of data (or labels)
+        :param dataset: single subset of data (or labels)
         :param chunk_size: size of 3d chunk (a, b, c) to train the model with them
         :param stride: three-elements tuple with steps value to make in each axis
         :return: generator which produces chunks with size (a, b, c)
         """
         chunk_x, chunk_y, chunk_z = chunk_size
 
-        for x, y, z in self._get_random_chunk_coords(data_subset, stride):
-            chunk = data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
+        for x, y, z in self._get_random_chunk_coords(dataset, chunk_size, stride):
+            chunk = dataset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
             if chunk.shape == tuple(chunk_size):
                 yield chunk
 
-    def _get_random_chunk_coords(self, data_subset, stride):
-        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, stride)
-                                        for origin_shape, stride in zip(data_subset.shape, stride)]
+    def _get_random_chunk_coords(self, dataset, chunk_size, stride):
+        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride)
+                                        for origin_shape, chunk_shape, stride in zip(dataset.shape, chunk_size, stride)]
 
         for coords in product(x_coords, y_coords, z_coords):
             yield coords
 
     @staticmethod
-    def _get_axis_coords_list(origin_shape, stride):
-        coords = list(range(stride, origin_shape - stride, stride))
+    def _get_axis_coords_list(origin_shape, chunk_shape, stride):
+        coords = list(range(chunk_shape, origin_shape - chunk_shape, stride))
         random.shuffle(coords)
         return coords
 

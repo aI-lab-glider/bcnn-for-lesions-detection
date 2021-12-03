@@ -8,13 +8,12 @@
       "is_activated": true
     },
     "create_data_structure": {
-      "train_part": 50,
-      "valid_part": 10,
-      "test_part": 5
+      "train_part": 70,
+      "valid_part": 20,
+      "test_part": 10
     },
     "create_chunks": {
       "is_activated": true,
-      "chunks_number": 50,
       "chunk_size": [
         64,
         64,
@@ -36,10 +35,10 @@
   "kl_alpha": 0,
   "kl_start_epoch": 2,
   "kl_alpha_increase_per_epoch": 0.5,
-  "epochs": 3,
+  "epochs": 15,
   "validation_steps": 5,
   "initial_epoch": 0,
-  "batch_size": 32,
+  "batch_size": 8,
   "lr_decay_start_epoch": 10,
-  "mc_samples": 5
+  "mc_samples": 10
 }

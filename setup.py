@@ -5,7 +5,7 @@ setup(
     version='1.0.0',
     install_requires=[
         'nibabel~=3.2.1',
-        'tensorflow-gpu==1.15',
+        'tensorflow==2.6.2',
         'tensorflow-probability==0.7.0',
         'matplotlib==3.1.0',
         'colorcet==2.0.1',
