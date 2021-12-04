@@ -12,8 +12,6 @@ class SimilarityComparer:
         :param lesion_mask_path: path to a file with original lesion mask
         :param variance_mask_path: path to a file with generated variance mask
         """
-        self.lesion_mask_path = lesion_mask_path
-        self.variance_mask_path = variance_mask_path
         self.lesion_mask = load_nifti_file(lesion_mask_path)
         self.variance_mask = self.normalize(load_nifti_file(variance_mask_path))
         self.metrics = {}
@@ -30,14 +28,6 @@ class SimilarityComparer:
 
         if print_metrics:
             self._print_metrics()
-
-    def get_metrics(self) -> Dict:
-        """
-        Returns similarity metrics.
-        :return: a dictionary of metrics
-        """
-        if self.metrics:
-            return self.metrics
 
     def _print_metrics(self):
         """
