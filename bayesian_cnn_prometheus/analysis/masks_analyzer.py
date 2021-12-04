@@ -4,7 +4,7 @@ import glob
 import numpy as np
 
 from bayesian_cnn_prometheus.analysis.similarity_comparer import SimilarityComparer
-from bayesian_cnn_prometheus.constants import Paths
+from bayesian_cnn_prometheus.constants import Paths, Metrics
 from typing import List
 
 
@@ -22,9 +22,9 @@ class MasksAnalyzer:
         self.lesion_mask_names = glob.glob(os.path.join(self.lesion_masks_path, Paths.MASK_FILE_PATTERN.format("*", "*")))
         self.variance_mask_names = glob.glob(os.path.join(self.variance_masks_path, "SEGMENTATION_VARIANCE_*.nii.gz"))
         self.metrics = {
-            "dice_coefficient": [],
-            "hausdorff_distance": [],
-            "jaccard_index": [],
+            Metrics.DICE_COEFFICIENT: [],
+            Metrics.HAUSDORFF_DISTANCE: [],
+            Metrics.JACCARD_INDEX: [],
         }
 
     def perform_analysis(self, save_to_json: bool = False):
@@ -37,7 +37,7 @@ class MasksAnalyzer:
             path_to_variance_mask = os.path.join(self.variance_masks_path, variance_mask_name)
             similarity_comparer = SimilarityComparer(path_to_lesion_mask, path_to_variance_mask)
             similarity_comparer.perform_analysis()
-            metrics = similarity_comparer.metrics()
+            metrics = similarity_comparer.metrics
 
             if metrics:
                 for key in metrics:

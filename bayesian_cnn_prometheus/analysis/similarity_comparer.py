@@ -1,8 +1,8 @@
 import numpy as np
 
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file # refactor idea: move this function to more 'general' directory
+from bayesian_cnn_prometheus.constants import Metrics
 from skimage import metrics as sk_metrics
-from typing import Dict
 
 
 class SimilarityComparer:
@@ -35,9 +35,9 @@ class SimilarityComparer:
         """
         if self.metrics:
             numeric_metrics = [
-                "dice_coefficient",
-                "hausdorff_distance",
-                "jaccard_index",
+                Metrics.DICE_COEFFICIENT,
+                Metrics.HAUSDORFF_DISTANCE,
+                Metrics.JACCARD_INDEX,
             ]
 
             print("Metrics:")
@@ -51,14 +51,14 @@ class SimilarityComparer:
         """
         changes_conjunction = np.sum(np.logical_and(self.lesion_mask, self.variance_mask))
         changes_count = np.sum(self.lesion_mask) + np.sum(self.variance_mask)
-        self.metrics["dice_coefficient"] = \
+        self.metrics[Metrics.DICE_COEFFICIENT] = \
             2 * changes_conjunction / changes_count if changes_count else .0
 
     def _assign_hausdorff_distance(self):
         """
         Computes the Hausdorff distance of nonzero lesion and variance masks voxels.
         """
-        self.metrics["hausdorff_distance"] = sk_metrics.hausdorff_distance(self.lesion_mask, self.variance_mask)
+        self.metrics[Metrics.HAUSDORFF_DISTANCE] = sk_metrics.hausdorff_distance(self.lesion_mask, self.variance_mask)
 
     def _assign_jaccard_index(self):
         """
@@ -66,7 +66,7 @@ class SimilarityComparer:
         """
         changes_conjunction = np.sum(np.logical_and(self.lesion_mask, self.variance_mask))
         changes_disjunction = np.sum(np.logical_or(self.lesion_mask, self.variance_mask))
-        self.metrics["jaccard_index"] = \
+        self.metrics[Metrics.JACCARD_INDEX] = \
             changes_conjunction / changes_disjunction if changes_disjunction else .0
 
     # refactor idea: in the future, we should think about normalization in other places as well

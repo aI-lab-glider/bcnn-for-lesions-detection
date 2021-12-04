@@ -46,5 +46,11 @@ class Paths:
     SUMMARY_FILE_PATTERN_PATH = RESULTS_PATH / SUMMARY_FILE_PATTERN
 
 
+class Metrics:
+    DICE_COEFFICIENT = "dice_coefficient"
+    HAUSDORFF_DISTANCE = "hausdorff_distance"
+    JACCARD_INDEX = "jaccard_index"
+
+
 BATCH_SIZE = 'batch_size'
 CHUNK_SIZE = 'chunk_size'
