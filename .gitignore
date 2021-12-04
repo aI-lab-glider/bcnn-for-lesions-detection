@@ -9,3 +9,4 @@ nifti/
 network/weights/
 .vscode/
 *.egg-info
+config.local.json
