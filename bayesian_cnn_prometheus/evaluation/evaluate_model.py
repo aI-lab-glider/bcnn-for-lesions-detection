@@ -4,7 +4,6 @@ from pathlib import Path
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file
-from bayesian_cnn_prometheus.tools.results_visualizer import ResultsVisualizer
 import nibabel as nib
 
 
@@ -24,10 +23,6 @@ def main():
         image_path, config['mc_samples'], config['preprocessing']['create_chunks']['stride'])
     model_evaluator.save_predictions(
         patient_id, predictions, image.affine, image.header)
-
-    # results_visualizer = ResultsVisualizer()
-    # results_visualizer.visualize_patient_results(
-    #     patient_id, predictions, slice_number=83, save_variance=True)
 
 
 def get_config():

@@ -17,7 +17,7 @@ class DatasetTypeTargets:
 
 class Paths:
     PROJECT_DIR = Path(bayesian_cnn_prometheus.__file__).parent
-    DATA_DIR = PROJECT_DIR/'..'/'data'
+    DATA_DIR = PROJECT_DIR/'data'
 
     CONFIG_PATH = PROJECT_DIR / 'config.json'
 

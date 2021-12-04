@@ -6,7 +6,7 @@ from bayesian_cnn_prometheus.cli.start_training import start_training
 @click.group()
 def entry_point():
     """
-    Entry point for Jon: Justifiable Ontologies Nemesis
+    Entry point for Jon: Justifiable Oncology Nemesis
     """
 
 
