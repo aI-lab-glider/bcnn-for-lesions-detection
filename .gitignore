@@ -1,12 +1,12 @@
 venv/
 idata/
 .idea/
+.DS_Store
 __pycache__/
 **/*.pyc
 **/*.swp
 data/
-nifti/
-network/weights/
+weights/
 .vscode/
 *.egg-info
 config.local.json

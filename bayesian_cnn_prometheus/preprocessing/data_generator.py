@@ -1,4 +1,6 @@
 import functools
+import random
+from itertools import product
 from typing import Dict, Generator
 
 import numpy as np
@@ -53,8 +55,8 @@ class DataGenerator:
             x_npy_norm = DataGenerator._normalize(
                 x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
-            for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
-                                        DataGenerator._generate_chunks(y_npy, self.chunk_size, self.stride)):
+            for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
+                                        self._generate_chunks(y_npy, self.chunk_size, self.stride)):
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
                 y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
@@ -64,27 +66,34 @@ class DataGenerator:
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
-    @staticmethod
-    def _generate_chunks(data_subset: np.ndarray, chunk_size: tuple = (32, 32, 16),
+    def _generate_chunks(self, dataset: np.ndarray, chunk_size: tuple = (32, 32, 16),
                          stride: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
-        :param data_subset: single subset of data (or labels)
+        :param dataset: single subset of data (or labels)
         :param chunk_size: size of 3d chunk (a, b, c) to train the model with them
         :param stride: three-elements tuple with steps value to make in each axis
         :return: generator which produces chunks with size (a, b, c)
         """
-        origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size
-        stride_x, stride_y, stride_z = stride
 
-        for x in range(0, origin_x, stride_x)[:-1]:
-            for y in range(0, origin_y, stride_y)[:-1]:
-                for z in range(0, origin_z, stride_z)[:-1]:
-                    chunk = data_subset[x:x + chunk_x,
-                                        y:y + chunk_y, z:z + chunk_z]
-                    if chunk.shape == tuple(chunk_size):
-                        yield chunk
+        for x, y, z in self._get_random_chunk_coords(dataset, chunk_size, stride):
+            chunk = dataset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
+            if chunk.shape == tuple(chunk_size):
+                yield chunk
+
+    def _get_random_chunk_coords(self, dataset, chunk_size, stride):
+        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride)
+                                        for origin_shape, chunk_shape, stride in zip(dataset.shape, chunk_size, stride)]
+
+        for coords in product(x_coords, y_coords, z_coords):
+            yield coords
+
+    @staticmethod
+    def _get_axis_coords_list(origin_shape, chunk_shape, stride):
+        coords = list(range(chunk_shape, origin_shape - chunk_shape, stride))
+        random.shuffle(coords)
+        return coords
 
     @staticmethod
     def _normalize(image: np.ndarray) -> np.ndarray:
