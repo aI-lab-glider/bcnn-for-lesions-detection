@@ -48,7 +48,6 @@ def variational_free_energy_loss(model, scale_factor, kl_alpha):
 
     def loss(y_true, y_pred):
         bce = binary_crossentropy(y_true, y_pred)
-        # kl = kl_divergence(y_true, y_pred)
         return bce + K.get_value(kl_alpha) * kl
 
     return loss
@@ -75,6 +74,7 @@ class AnnealingCallback(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         if epoch >= self.kl_start_epoch - 2:
-            new_kl_alpha = min(K.get_value(self.kl_alpha) + self.kl_alpha_increase_per_epoch, 1.)
+            new_kl_alpha = min(K.get_value(self.kl_alpha) +
+                               self.kl_alpha_increase_per_epoch, 1.)
             K.set_value(self.kl_alpha, new_kl_alpha)
         print("Current KL Weight is " + str(K.get_value(self.kl_alpha)))

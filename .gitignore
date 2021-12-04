@@ -9,4 +9,5 @@ data/
 weights/
 .vscode/
 *.egg-info
-config.local.json
+*/config.local.json
+.env

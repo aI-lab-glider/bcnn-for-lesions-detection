@@ -26,7 +26,7 @@ def main():
 
 
 def get_config():
-    with open(Paths.PROJECT_DIR/'config.json') as cf:
+    with open(Paths.CONFIG_PATH) as cf:
         config = json.load(cf)
     return config
 
