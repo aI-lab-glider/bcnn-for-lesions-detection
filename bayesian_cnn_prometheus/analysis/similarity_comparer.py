@@ -1,8 +1,8 @@
 import numpy as np
-
-from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file # refactor idea: move this function to more 'general' directory
-from bayesian_cnn_prometheus.constants import Metrics
 from skimage import metrics as sk_metrics
+
+from bayesian_cnn_prometheus.constants import Metrics
+from bayesian_cnn_prometheus.utils import load_nifti_file
 
 
 class SimilarityComparer:

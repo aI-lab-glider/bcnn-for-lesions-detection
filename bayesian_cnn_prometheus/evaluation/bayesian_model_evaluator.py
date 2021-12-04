@@ -5,8 +5,8 @@ from tensorflow.python.keras.engine.training import Model
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import bayesian_vnet
+from bayesian_cnn_prometheus.utils import load_nifti_file, save_as_nifti
 
 
 class BayesianModelEvaluator:

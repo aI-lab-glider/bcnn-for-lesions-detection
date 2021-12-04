@@ -1,13 +1,14 @@
+import glob
 import json
 import os
-import glob
+from functools import reduce
+from typing import List
+
+from tqdm import tqdm
 
 from bayesian_cnn_prometheus.analysis.similarity_comparer import SimilarityComparer
-# refactor idea: importing get_patient_index from there; maybe it should be in another place?
-from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.constants import Paths, Metrics
-from typing import List
-from functools import reduce
+from bayesian_cnn_prometheus.utils import get_patient_index
 
 
 class MasksAnalyzer:
@@ -21,7 +22,8 @@ class MasksAnalyzer:
         self.model_name = model_name
         self.lesion_masks_path = lesion_masks_path
         self.variance_masks_path = variance_masks_path
-        self.lesion_mask_paths = glob.glob(os.path.join(self.lesion_masks_path, Paths.MASK_FILE_PATTERN.format("*", "*")))
+        self.lesion_mask_paths = glob.glob(
+            os.path.join(self.lesion_masks_path, Paths.MASK_FILE_PATTERN.format("*", "*")))
         self.variance_mask_paths = glob.glob(os.path.join(self.variance_masks_path, "SEGMENTATION_VARIANCE_*.nii.gz"))
         self.results = {}
 
@@ -30,9 +32,9 @@ class MasksAnalyzer:
         Assigns similarity metrics describing each lesion and variance masks pair.
         :param save_to_json: if True, saves mean of corresponding metrics to JSON file
         """
-        for path_to_lesion_mask, path_to_variance_mask in zip(self.lesion_mask_paths, self.variance_mask_paths):
+        for path_to_lesion_mask, path_to_variance_mask in tqdm(zip(self.lesion_mask_paths, self.variance_mask_paths)):
             lesion_mask_name = os.path.basename(path_to_lesion_mask)
-            pair_id = DataSplitter.get_patient_index(lesion_mask_name)
+            pair_id = get_patient_index(lesion_mask_name)
             similarity_comparer = SimilarityComparer(path_to_lesion_mask, path_to_variance_mask)
             similarity_comparer.perform_analysis()
             metrics = similarity_comparer.metrics
@@ -51,10 +53,11 @@ class MasksAnalyzer:
         """
         if self.results:
             means = {metric: 0.0 for metric in self.results[next(iter(self.results))]}
-            cumulated_metrics = reduce(lambda metrics1, metrics2: {key: metrics1[key] + metrics2[key] for key in means},
-                                       self.results.values(), means)
+            cumulated_metrics = reduce(
+                lambda metrics1, metrics2: {metric: metrics1[metric] + metrics2[metric] for metric in means},
+                self.results.values(), means)
             results_number = len(self.results)
-            mean_metrics = {key: cumulated_metrics[key] / results_number for key in cumulated_metrics}
+            mean_metrics = {metric: cumulated_metrics[metric] / results_number for metric in cumulated_metrics}
             self.results[Metrics.MEANS] = mean_metrics
 
     @staticmethod

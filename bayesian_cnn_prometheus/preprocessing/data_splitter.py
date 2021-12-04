@@ -89,12 +89,3 @@ class DataSplitter:
         nifti = nib.load(target_path)
         npy = nifti.get_fdata()
         return len(np.unique(npy)) == 1
-
-    @staticmethod
-    def get_patient_index(mask_path: str) -> str:
-        """
-        Extracts patient index from the path to mask.
-        :param mask_path: path to patient mask
-        :return: patient index
-        """
-        return mask_path.split('.')[0].split('_')[-1]
