@@ -7,7 +7,7 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback, LearningRateScheduler, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 
-from .model.bayesian_vnet import bayesian_vnet
+from .model.bayesian_vnet import BayesianVnet
 from .model.utils import AnnealingCallback, variational_free_energy_loss
 
 
@@ -54,10 +54,11 @@ class BayesianDetector:
         self._initialize_callbacks()
 
     def _initialize_model(self, input_shape: Tuple[int, ...]):
-        self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
-                                    padding=self._padding, prior_std=self._prior_std)
+        self._model = BayesianVnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
+                                   padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
-        loss_function = variational_free_energy_loss(self._kl_alpha)
+        self._model(tf.ones((self._batch_size, *input_shape)))
+        loss_function = variational_free_energy_loss(self._model, 100 / self._batch_size, self._kl_alpha)
         self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
