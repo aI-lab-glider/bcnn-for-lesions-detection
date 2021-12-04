@@ -76,7 +76,7 @@ class DataSplitter:
         """
         masks_paths = glob.glob(str(Paths.MASK_FILE_PATTERN_PATH).format('*', 'nii.gz'))
         healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
-        healthy_patients_indices = [self._get_patient_index(mask_path) for mask_path in healthy_masks_paths]
+        healthy_patients_indices = [self.get_patient_index(mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
 
     @staticmethod
@@ -89,12 +89,3 @@ class DataSplitter:
         nifti = nib.load(target_path)
         npy = nifti.get_fdata()
         return len(np.unique(npy)) == 1
-
-    @staticmethod
-    def _get_patient_index(mask_path: str) -> str:
-        """
-        Extracts patient index from the path to mask.
-        :param mask_path: path to patient mask
-        :return: patient index
-        """
-        return mask_path.split('.')[0].split('_')[-1]
