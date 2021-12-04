@@ -1,36 +1,21 @@
-# 3d-cnn-prometheus
+# JON - Justifiable Oncology Nemesis
 
-## Setup
+JON is a tool that utilizes U-Net architecture and Bayesian probabilistic layers in order to detect areas with high probability of pathology changes on computer tomography scans. 
 
-1. Activate venv and install requirements
+## Motivation
 
-```
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+Medical image analysis is an area of great interest in both medicine and computer science. Pathological changes classificators, which are used in this research, have to fulfill following requirements:
 
-2. Update config files in required modules
+- explainability - a doctor has to know the algorithm’s motivation to make decision, 
+- speed - time to classify pathological changes has to be as short as possible.
 
-```
-vim 3d_cnn_prometheus/MODULE_NAME/config.json
-```
+One of the most popular explainable solutions is the Sliding Window algorithm. It processes every single pixel within its context. The main disadvantage of this approach is the fact that it is time-consuming, because medical images are usually three-dimensional and consist of millions of pixels.
 
-## Preprocessing
+The presentation describes a tool to reduce the number of pixels being processed. This operation highly optimizes the classification process.
 
-1. Update config path in `3d_cnn_prometheus/preprocessing/preprocess_data.py` (tmp)
-2. Run preprocessing:
+Implementation of this tool uses a probabilistic Bayesian neural network for lung segmentation. The model is trained on scans from the computer tomography of healthy patients. Bayesian neural networks have layers providing non-deterministic output of the model which enable the program to calculate variance of predictions. The main assumption of the project is treating these high variance areas as anomalies.
 
-```
-python3 3d_cnn_prometheus/preprocessing/preprocess_data.py
-```
 
-## Learning
-
-1. Update config path in `3d_cnn_prometheus/learning/model/experiment_setup.py`
-   and `3d_cnn_prometheus/learning/model/constants.py`  (tmp)
-2. Run training:
-
-```
-python3 3d_cnn_prometheus/learning/train_network.py
-```
+## Inspirations
+- [Fully automated algorithm for the detection of bone marrow oedema lesions in patients with axial spondyloarthritis – Feasibility study](https://www.sciencedirect.com/science/article/abs/pii/S0208521621000589)
+- [We Know Where We Don't Know: 3D Bayesian CNNs for Credible Geometric Uncertainty](https://arxiv.org/abs/1910.10793)
