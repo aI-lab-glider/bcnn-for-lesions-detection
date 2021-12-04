@@ -22,7 +22,7 @@ def main():
     predictions = model_evaluator.evaluate(
         image_path, config['mc_samples'], config['preprocessing']['create_chunks']['stride'])
     model_evaluator.save_predictions(
-        patient_id, predictions, image.affine, image.header)
+        patient_id, predictions, image.affine, image.header, config['should_perform_binarization'])
 
 
 def get_config():

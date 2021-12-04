@@ -40,5 +40,6 @@
   "initial_epoch": 0,
   "batch_size": 32,
   "lr_decay_start_epoch": 10,
-  "mc_samples": 20
+  "mc_samples": 20,
+  "should_perform_binarization": false
 }
