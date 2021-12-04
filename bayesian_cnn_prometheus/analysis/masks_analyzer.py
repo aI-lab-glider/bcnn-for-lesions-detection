@@ -1,11 +1,13 @@
 import json
 import os
 import glob
-import numpy as np
 
 from bayesian_cnn_prometheus.analysis.similarity_comparer import SimilarityComparer
+# refactor idea: importing get_patient_index from there; maybe it should be in another place?
+from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.constants import Paths, Metrics
 from typing import List
+from functools import reduce
 
 
 class MasksAnalyzer:
@@ -19,32 +21,41 @@ class MasksAnalyzer:
         self.model_name = model_name
         self.lesion_masks_path = lesion_masks_path
         self.variance_masks_path = variance_masks_path
-        self.lesion_mask_names = glob.glob(os.path.join(self.lesion_masks_path, Paths.MASK_FILE_PATTERN.format("*", "*")))
-        self.variance_mask_names = glob.glob(os.path.join(self.variance_masks_path, "SEGMENTATION_VARIANCE_*.nii.gz"))
-        self.metrics = {
-            Metrics.DICE_COEFFICIENT: [],
-            Metrics.HAUSDORFF_DISTANCE: [],
-            Metrics.JACCARD_INDEX: [],
-        }
+        self.lesion_mask_paths = glob.glob(os.path.join(self.lesion_masks_path, Paths.MASK_FILE_PATTERN.format("*", "*")))
+        self.variance_mask_paths = glob.glob(os.path.join(self.variance_masks_path, "SEGMENTATION_VARIANCE_*.nii.gz"))
+        self.results = {}
 
     def perform_analysis(self, save_to_json: bool = False):
         """
         Assigns similarity metrics describing each lesion and variance masks pair.
         :param save_to_json: if True, saves mean of corresponding metrics to JSON file
         """
-        for lesion_mask_name, variance_mask_name in zip(self.lesion_mask_names, self.variance_mask_names):
-            path_to_lesion_mask = os.path.join(self.lesion_masks_path, lesion_mask_name)
-            path_to_variance_mask = os.path.join(self.variance_masks_path, variance_mask_name)
+        for path_to_lesion_mask, path_to_variance_mask in zip(self.lesion_mask_paths, self.variance_mask_paths):
+            lesion_mask_name = os.path.basename(path_to_lesion_mask)
+            pair_id = DataSplitter.get_patient_index(lesion_mask_name)
             similarity_comparer = SimilarityComparer(path_to_lesion_mask, path_to_variance_mask)
             similarity_comparer.perform_analysis()
             metrics = similarity_comparer.metrics
 
             if metrics:
-                for key in metrics:
-                    self.metrics[key].append(metrics[key])
+                self.results[pair_id] = metrics
+
+        self._assign_metrics_means()
 
         if save_to_json:
             self._save_to_json()
+
+    def _assign_metrics_means(self):
+        """
+        Calculates the means of every metrics respectively.
+        """
+        if self.results:
+            means = {metric: 0.0 for metric in self.results[next(iter(self.results))]}
+            cumulated_metrics = reduce(lambda metrics1, metrics2: {key: metrics1[key] + metrics2[key] for key in means},
+                                       self.results.values(), means)
+            results_number = len(self.results)
+            mean_metrics = {key: cumulated_metrics[key] / results_number for key in cumulated_metrics}
+            self.results[Metrics.MEANS] = mean_metrics
 
     @staticmethod
     def load_mask_names(path_to_dir_with_mask_files: str) -> List[str]:
@@ -57,9 +68,8 @@ class MasksAnalyzer:
 
     def _save_to_json(self):
         """
-        Saves mean of corresponding metrics to a JSON file
+        Saves mean of corresponding metrics to a JSON file.
         """
-        if self.metrics:
-            means = {key: np.mean(self.metrics[key]) for key in self.metrics}
+        if self.results:
             with open(self.model_name + "_metrics.json", "w") as f:
-                json.dump(means, f)
+                json.dump(self.results, f)

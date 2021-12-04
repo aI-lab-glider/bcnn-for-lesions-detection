@@ -50,6 +50,7 @@ class Metrics:
     DICE_COEFFICIENT = "dice_coefficient"
     HAUSDORFF_DISTANCE = "hausdorff_distance"
     JACCARD_INDEX = "jaccard_index"
+    MEANS = "means"
 
 
 BATCH_SIZE = 'batch_size'
