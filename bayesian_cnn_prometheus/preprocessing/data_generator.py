@@ -1,7 +1,7 @@
 import functools
 import random
 from itertools import product
-from typing import Dict, Generator
+from typing import Dict, Generator, Tuple
 
 import numpy as np
 
@@ -9,6 +9,14 @@ from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
+from dataclasses import dataclass
+
+
+@dataclass
+class DataGeneratorConfig:
+    stride: Tuple[int, int, int]
+    chunk_size: Tuple[int, int, int]
+    should_shuffle: bool
 
 
 class DataGenerator:
@@ -22,11 +30,12 @@ class DataGenerator:
             "normalize_images").get("is_activated")
         self.image_loader = ImageLoader(
             preprocessing_config.get('transform_nifti_to_npy').get('ext'))
-        self.chunk_size = preprocessing_config.get(
-            'create_chunks').get('chunk_size')
-        self.stride = preprocessing_config.get('create_chunks').get('stride')
-        self.data_splitter = DataSplitter(preprocessing_config.get('create_data_structure'),
-                                          preprocessing_config.get('update_healthy_patients_indices'))
+
+        self.config = DataGeneratorConfig(
+            **preprocessing_config['create_chunks'])
+
+        self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
+                                          preprocessing_config['update_healthy_patients_indices'])
         self.dataset_structure = None
 
     def get_train(self):
@@ -55,8 +64,8 @@ class DataGenerator:
             x_npy_norm = DataGenerator._normalize(
                 x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
-            for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
-                                        self._generate_chunks(y_npy, self.chunk_size, self.stride)):
+            for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
+                                        self._generate_chunks(y_npy, self.config.chunk_size, self.config.stride)):
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
                 y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
@@ -77,22 +86,23 @@ class DataGenerator:
         """
         chunk_x, chunk_y, chunk_z = chunk_size
 
-        for x, y, z in self._get_random_chunk_coords(dataset, chunk_size, stride):
+        for x, y, z in self._get_coords(dataset, chunk_size, stride):
             chunk = dataset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
             if chunk.shape == tuple(chunk_size):
                 yield chunk
 
-    def _get_random_chunk_coords(self, dataset, chunk_size, stride):
-        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride)
+    def _get_coords(self, dataset, chunk_size, stride):
+        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride, self.config.should_shuffle)
                                         for origin_shape, chunk_shape, stride in zip(dataset.shape, chunk_size, stride)]
 
         for coords in product(x_coords, y_coords, z_coords):
             yield coords
 
     @staticmethod
-    def _get_axis_coords_list(origin_shape, chunk_shape, stride):
+    def _get_axis_coords_list(origin_shape, chunk_shape, stride, should_shuffle: bool):
         coords = list(range(chunk_shape, origin_shape - chunk_shape, stride))
-        random.shuffle(coords)
+        if should_shuffle:
+            random.shuffle(coords)
         return coords
 
     @staticmethod
