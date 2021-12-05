@@ -1,28 +1,51 @@
 import json
 
+from pathlib import Path
+from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
-from bayesian_cnn_prometheus.tools.results_visualizer import ResultsVisualizer
+import nibabel as nib
+from dataclasses import dataclass, fields
+
+from bayesian_cnn_prometheus.evaluation.utils import assert_fields_have_values, load_config
+
+
+@dataclass
+class EvaluationConfig:
+    model_name: str
+    patient_id: int
 
 
 def main():
-    weights_path = 'PATH_TO_WEIGHTS_H5'
-    image_path = 'PATH_TO_SAMPLE_CT_SCAN'
+    app_config = load_config()
 
-    config = get_config()
-    patient_id = image_path.split('.')[0].split('_')[-1]
+    assert_fields_have_values(app_config.get('evaluation', {}), [
+                              field.name for field in fields(EvaluationConfig)])
 
-    model_evaluator = BayesianModelEvaluator(weights_path, tuple([*config['chunk_size'], 1]))
-    predictions = model_evaluator.evaluate(image_path, config['mc_samples'], config['stride'])
-    model_evaluator.save_predictions(patient_id, predictions)
+    evaluation_config = EvaluationConfig(**app_config['evaluation'])
 
-    results_visualizer = ResultsVisualizer()
-    results_visualizer.visualize_patient_results(patient_id, predictions, slice_number=83, save_variance=True)
+    weights_path = str(Paths.PROJECT_DIR.parent/'weights' /
+                       evaluation_config.model_name)
+    image_path = str(Paths.PROJECT_DIR.parent/'data' /
+                     'IMAGES'/f'IMG_{evaluation_config.patient_id:0>4}.nii.gz')
 
+    image = nib.load(image_path)
+    model_evaluator = BayesianModelEvaluator(
+        weights_path,
+        tuple([*app_config.get('preprocessing', {}
+                               ).get('create_chunks', {}).get('chunk_size')])
+    )
 
-def get_config():
-    with open('../config.json') as cf:
-        config = json.load(cf)
-    return config
+    predictions = model_evaluator.evaluate(
+        image_path,
+        app_config.get('mc_samples'),
+        app_config.get('preprocessing', {}).get('create_chunks', {}).get('stride'))
+
+    model_evaluator.save_predictions(
+        evaluation_config.patient_id,
+        predictions,
+        image.affine,
+        image.header,
+        app_config.get('should_perform_binarization', False))
 
 
 if __name__ == '__main__':
