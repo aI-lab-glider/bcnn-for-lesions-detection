@@ -8,7 +8,7 @@ import numpy as np
 
 import bayesian_cnn_prometheus
 from bayesian_cnn_prometheus.constants import DatasetType, Paths
-from bayesian_cnn_prometheus.utils import get_patient_index
+from bayesian_cnn_prometheus.evaluation.utils import get_patient_index
 
 
 class DataSplitter:

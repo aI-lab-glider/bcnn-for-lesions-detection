@@ -1,12 +1,12 @@
-import json
 from bayesian_cnn_prometheus.constants import Paths
+from bayesian_cnn_prometheus.evaluation.utils import load_config
 
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
 
 def main():
-    config = get_config()
+    config = load_config()
     preprocessing_config = config.get('preprocessing')
     batch_size = config.get('batch_size')
     chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
@@ -21,12 +21,6 @@ def main():
     detector = BayesianDetector(
         config, batch_size, BayesianDetector.get_input_shape(training_dataset))
     detector.fit(training_dataset, validation_dataset)
-
-
-def get_config():
-    with open(Paths.CONFIG_PATH) as cf:
-        config = json.load(cf)
-    return config
 
 
 if __name__ == '__main__':

@@ -8,8 +8,6 @@ from tqdm import tqdm
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
-from bayesian_cnn_prometheus.utils import load_nifti_file, save_as_nifti
-from dataclasses import dataclass
 
 
 class BayesianModelEvaluator:
@@ -86,7 +84,7 @@ class BayesianModelEvaluator:
         segmentation = cls.get_segmentation_from_mean(
             predictions, should_perform_binarization)
         variance = cls.get_segmentation_variance(predictions)
-        predictions_path = str(Paths.SUMMARY_FILE_PATTERN_PATH).format(
+        predictions_path = str(Paths.PREDICTION_FILE_PATTERN_PATH).format(
             patient_id, 'nii.gz')
         save_as_nifti(segmentation, Path(
             predictions_path), affine, nifti_header)

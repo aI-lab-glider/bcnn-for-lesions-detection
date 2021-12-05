@@ -41,5 +41,14 @@
   "batch_size": 32,
   "lr_decay_start_epoch": 10,
   "mc_samples": 20,
-  "should_perform_binarization": false
+  "should_perform_binarization": false,
+  "evaluation": {
+    "model_name": "a",
+    "patient_id": 1
+  },
+  "mask_analysis": {
+    "model_name": null,
+    "lesion_masks_path": null,
+    "variance_masks_path": null
+  }
 }

@@ -11,3 +11,4 @@ weights/
 *.egg-info
 */config.local.json
 .env
+weights_tf_1/

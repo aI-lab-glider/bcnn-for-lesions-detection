@@ -1,8 +1,8 @@
 import numpy as np
+from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file
 from skimage import metrics as sk_metrics
 
 from bayesian_cnn_prometheus.constants import Metrics
-from bayesian_cnn_prometheus.utils import load_nifti_file
 
 
 class SimilarityComparer:
@@ -13,7 +13,8 @@ class SimilarityComparer:
         :param variance_mask_path: path to a file with generated variance mask
         """
         self.lesion_mask = load_nifti_file(lesion_mask_path)
-        self.variance_mask = self.normalize(load_nifti_file(variance_mask_path))
+        self.variance_mask = self.normalize(
+            load_nifti_file(variance_mask_path))
         self.metrics = {}
 
     def perform_analysis(self, print_metrics: bool = False):
@@ -49,7 +50,8 @@ class SimilarityComparer:
         """
         Computes the Dice similarity coefficient between lesion and variance masks.
         """
-        changes_conjunction = np.sum(np.logical_and(self.lesion_mask, self.variance_mask))
+        changes_conjunction = np.sum(np.logical_and(
+            self.lesion_mask, self.variance_mask))
         changes_count = np.sum(self.lesion_mask) + np.sum(self.variance_mask)
         self.metrics[Metrics.DICE_COEFFICIENT] = \
             2 * changes_conjunction / changes_count if changes_count else .0
@@ -58,14 +60,17 @@ class SimilarityComparer:
         """
         Computes the Hausdorff distance of nonzero lesion and variance masks voxels.
         """
-        self.metrics[Metrics.HAUSDORFF_DISTANCE] = sk_metrics.hausdorff_distance(self.lesion_mask, self.variance_mask)
+        self.metrics[Metrics.HAUSDORFF_DISTANCE] = sk_metrics.hausdorff_distance(
+            self.lesion_mask, self.variance_mask)
 
     def _assign_jaccard_index(self):
         """
         Computes the Jaccard index between lesion and variance masks.
         """
-        changes_conjunction = np.sum(np.logical_and(self.lesion_mask, self.variance_mask))
-        changes_disjunction = np.sum(np.logical_or(self.lesion_mask, self.variance_mask))
+        changes_conjunction = np.sum(np.logical_and(
+            self.lesion_mask, self.variance_mask))
+        changes_disjunction = np.sum(np.logical_or(
+            self.lesion_mask, self.variance_mask))
         self.metrics[Metrics.JACCARD_INDEX] = \
             changes_conjunction / changes_disjunction if changes_disjunction else .0
 
@@ -78,7 +83,8 @@ class SimilarityComparer:
         :param arr: numpy array
         """
         normalized_arr = (arr - arr.min()) / (arr.max() - arr.min())
-        threshold = normalized_arr.max() / 100  # possible candidate to become a hyperparameter
+        # possible candidate to become a hyperparameter
+        threshold = normalized_arr.max() / 100
         normalized_arr[normalized_arr > threshold] = 1
         normalized_arr[normalized_arr <= threshold] = 0
 
