@@ -43,8 +43,8 @@
   "mc_samples": 20,
   "should_perform_binarization": false,
   "evaluation": {
-    "model_name": "a",
-    "patient_id": 1
+    "model_name": null,
+    "patient_id": null
   },
   "mask_analysis": {
     "model_name": null,
