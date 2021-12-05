@@ -8,6 +8,7 @@ import numpy as np
 
 import bayesian_cnn_prometheus
 from bayesian_cnn_prometheus.constants import DatasetType, Paths
+from bayesian_cnn_prometheus.utils import get_patient_index
 
 
 class DataSplitter:
@@ -76,7 +77,7 @@ class DataSplitter:
         """
         masks_paths = glob.glob(str(Paths.MASK_FILE_PATTERN_PATH).format('*', 'nii.gz'))
         healthy_masks_paths = [target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
-        healthy_patients_indices = [self.get_patient_index(mask_path) for mask_path in healthy_masks_paths]
+        healthy_patients_indices = [get_patient_index(mask_path) for mask_path in healthy_masks_paths]
         return healthy_patients_indices
 
     @staticmethod
