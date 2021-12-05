@@ -3,17 +3,17 @@
     "transform_nifti_to_npy": {
       "ext": "nii.gz"
     },
-    "update_healthy_patients_indices": true,
+    "update_healthy_patients_indices": false,
     "normalize_images": {
       "is_activated": true
     },
     "create_data_structure": {
-      "train_part": 7,
-      "valid_part": 2,
-      "test_part": 1
+      "train_part": 0.75,
+      "valid_part": 0.15,
+      "test_part": 0.1
     },
     "create_chunks": {
-      "is_activated": true,
+      "should_shuffle": true,
       "chunk_size": [
         64,
         64,
@@ -28,12 +28,6 @@
   },
   "weights_dir": "weights",
   "weights_path": null,
-  "predict_dir": "predict",
-  "images_dir": "images",
-  "step": 3,
-  "resume": true,
-  "bayesian": true,
-  "vnet": true,
   "prior_std": 1,
   "kernel_size": 3,
   "activation": "relu",
@@ -44,17 +38,17 @@
   "epochs": 3,
   "validation_steps": 5,
   "initial_epoch": 0,
-  "initial_learning_rate": 0.001,
-  "lr_decay_start_epoch": 10,
   "batch_size": 32,
-  "num_gpus": 1,
-  "mc_samples": 3,
-  "border_trim": 0.1,
-  "lower_percentile": 30,
-  "upper_percentile": 70,
-  "chunk_size": [
-    64,
-    64,
-    32
-  ]
+  "lr_decay_start_epoch": 10,
+  "mc_samples": 20,
+  "should_perform_binarization": false,
+  "evaluation": {
+    "model_name": null,
+    "patient_id": null
+  },
+  "mask_analysis": {
+    "model_name": null,
+    "lesion_masks_path": null,
+    "variance_masks_path": null
+  }
 }

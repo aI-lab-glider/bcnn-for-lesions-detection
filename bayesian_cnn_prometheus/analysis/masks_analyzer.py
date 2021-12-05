@@ -3,12 +3,12 @@ import json
 import os
 from functools import reduce
 from typing import List
+from bayesian_cnn_prometheus.evaluation.utils import get_patient_index
 
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.analysis.similarity_comparer import SimilarityComparer
 from bayesian_cnn_prometheus.constants import Paths, Metrics
-from bayesian_cnn_prometheus.utils import get_patient_index
 
 
 class MasksAnalyzer:
@@ -24,7 +24,8 @@ class MasksAnalyzer:
         self.variance_masks_path = variance_masks_path
         self.lesion_mask_paths = glob.glob(
             os.path.join(self.lesion_masks_path, Paths.MASK_FILE_PATTERN.format("*", "*")))
-        self.variance_mask_paths = glob.glob(os.path.join(self.variance_masks_path, "SEGMENTATION_VARIANCE_*.nii.gz"))
+        self.variance_mask_paths = glob.glob(os.path.join(
+            self.variance_masks_path, Paths.VARIANCE_FILE_PATTERN.format("*", "nii.gz")))
         self.results = {}
 
     def perform_analysis(self, save_to_json: bool = False):
@@ -35,7 +36,8 @@ class MasksAnalyzer:
         for path_to_lesion_mask, path_to_variance_mask in tqdm(zip(self.lesion_mask_paths, self.variance_mask_paths)):
             lesion_mask_name = os.path.basename(path_to_lesion_mask)
             pair_id = get_patient_index(lesion_mask_name)
-            similarity_comparer = SimilarityComparer(path_to_lesion_mask, path_to_variance_mask)
+            similarity_comparer = SimilarityComparer(
+                path_to_lesion_mask, path_to_variance_mask)
             similarity_comparer.perform_analysis()
             metrics = similarity_comparer.metrics
 
@@ -52,12 +54,17 @@ class MasksAnalyzer:
         Calculates the means of every metrics respectively.
         """
         if self.results:
-            means = {metric: 0.0 for metric in self.results[next(iter(self.results))]}
+            means = {
+                metric: 0.0 for metric in self.results[next(iter(self.results))]}
             cumulated_metrics = reduce(
-                lambda metrics1, metrics2: {metric: metrics1[metric] + metrics2[metric] for metric in means},
-                self.results.values(), means)
+                lambda metrics1, metrics2: {
+                    metric: metrics1[metric] + metrics2[metric] for metric in means
+                },
+                self.results.values(),
+                means)
             results_number = len(self.results)
-            mean_metrics = {metric: cumulated_metrics[metric] / results_number for metric in cumulated_metrics}
+            mean_metrics = {
+                metric: cumulated_metrics[metric] / results_number for metric in cumulated_metrics}
             self.results[Metrics.MEANS] = mean_metrics
 
     @staticmethod
@@ -74,5 +81,5 @@ class MasksAnalyzer:
         Saves mean of corresponding metrics to a JSON file.
         """
         if self.results:
-            with open(self.model_name + "_metrics.json", "w") as f:
+            with open(f"{self.model_name}_metrics.json", "w") as f:
                 json.dump(self.results, f)

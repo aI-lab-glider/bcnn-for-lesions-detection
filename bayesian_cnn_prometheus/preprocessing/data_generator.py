@@ -1,11 +1,22 @@
 import functools
-from typing import Dict, Generator
+import random
+from itertools import product
+from typing import Dict, Generator, Tuple
 
 import numpy as np
 
 from bayesian_cnn_prometheus.constants import DatasetType
+from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
+from dataclasses import dataclass
+
+
+@dataclass
+class DataGeneratorConfig:
+    stride: Tuple[int, int, int]
+    chunk_size: Tuple[int, int, int]
+    should_shuffle: bool
 
 
 class DataGenerator:
@@ -15,13 +26,16 @@ class DataGenerator:
         :param preprocessing_config: structure with configuration to use in preprocessing in learning
         """
         self.batch_size = batch_size
-        self.should_normalise = preprocessing_config.get("normalize_images").get("is_activated")
-        self.image_loader = ImageLoader(preprocessing_config.get('transform_nifti_to_npy').get('ext'))
-        # TODO ProxPxD: is there a need for the activation of chunking?
-        self.chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
-        self.stride = preprocessing_config.get('create_chunks').get('stride')
-        self.data_splitter = DataSplitter(preprocessing_config.get('create_data_structure'),
-                                          preprocessing_config.get('update_healthy_patients_indices'))
+        self.should_normalise = preprocessing_config.get(
+            "normalize_images").get("is_activated")
+        self.image_loader = ImageLoader(
+            preprocessing_config.get('transform_nifti_to_npy').get('ext'))
+
+        self.config = DataGeneratorConfig(
+            **preprocessing_config['create_chunks'])
+
+        self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
+                                          preprocessing_config['update_healthy_patients_indices'])
         self.dataset_structure = None
 
     def get_train(self):
@@ -47,10 +61,11 @@ class DataGenerator:
         """
         for image_index in self.dataset_structure[dataset_type]:
             x_npy, y_npy = self.image_loader.load(image_index)
-            x_npy_norm = DataGenerator._normalize(x_npy) if self.should_normalise else x_npy
+            x_npy_norm = DataGenerator._normalize(
+                x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
-            for x_chunk, y_chunk in zip(DataGenerator._generate_chunks(x_npy_norm, self.chunk_size, self.stride),
-                                        DataGenerator._generate_chunks(y_npy, self.chunk_size, self.stride)):
+            for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
+                                        self._generate_chunks(y_npy, self.config.chunk_size, self.config.stride)):
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
                 y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
@@ -60,32 +75,41 @@ class DataGenerator:
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
-    @staticmethod
-    def _generate_chunks(data_subset: np.array, chunk_size: tuple = (32, 32, 16),
+    def _generate_chunks(self, dataset: np.ndarray, chunk_size: tuple = (32, 32, 16),
                          stride: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
-        :param data_subset: single subset of data (or labels)
+        :param dataset: single subset of data (or labels)
         :param chunk_size: size of 3d chunk (a, b, c) to train the model with them
         :param stride: three-elements tuple with steps value to make in each axis
         :return: generator which produces chunks with size (a, b, c)
         """
-        origin_x, origin_y, origin_z = data_subset.shape
         chunk_x, chunk_y, chunk_z = chunk_size
-        stride_x, stride_y, stride_z = stride
 
-        for x in range(0, origin_x, stride_x)[:-1]:
-            for y in range(0, origin_y, stride_y)[:-1]:
-                for z in range(0, origin_z, stride_z)[:-1]:
-                    chunk = data_subset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
-                    if chunk.shape == tuple(chunk_size):
-                        yield chunk
+        for x, y, z in self._get_coords(dataset, chunk_size, stride):
+            chunk = dataset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
+            if chunk.shape == tuple(chunk_size):
+                yield chunk
+
+    def _get_coords(self, dataset, chunk_size, stride):
+        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride, self.config.should_shuffle)
+                                        for origin_shape, chunk_shape, stride in zip(dataset.shape, chunk_size, stride)]
+
+        for coords in product(x_coords, y_coords, z_coords):
+            yield coords
 
     @staticmethod
-    def _normalize(image: np.array) -> np.array:
+    def _get_axis_coords_list(origin_shape, chunk_shape, stride, should_shuffle: bool):
+        coords = list(range(chunk_shape, origin_shape - chunk_shape, stride))
+        if should_shuffle:
+            random.shuffle(coords)
+        return coords
+
+    @staticmethod
+    def _normalize(image: np.ndarray) -> np.ndarray:
         """
         Transforms data to have mean 0 and std 1 (standardize).
         :param image: non-standardized image to transform
         :return standardized image
         """
-        return (image - np.mean(image)) / np.std(image)
+        return standardize_image(image)

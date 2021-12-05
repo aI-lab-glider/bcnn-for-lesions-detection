@@ -4,11 +4,10 @@ from typing import Tuple, Dict
 import math
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint
-from tensorflow_core.python.keras.callbacks import Callback
-from tensorflow_core.python.keras.optimizer_v2.adam import Adam
+from tensorflow.keras.callbacks import Callback, LearningRateScheduler, ModelCheckpoint
+from tensorflow.keras.optimizers import Adam
 
-from .model.bayesian_vnet import bayesian_vnet
+from .model.bayesian_vnet import BayesianVnet
 from .model.utils import AnnealingCallback, variational_free_energy_loss
 
 
@@ -55,12 +54,11 @@ class BayesianDetector:
         self._initialize_callbacks()
 
     def _initialize_model(self, input_shape: Tuple[int, ...]):
-        train_len = self._calculate_train_len()
-
-        self._model = bayesian_vnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
-                                    padding=self._padding, prior_std=self._prior_std)
+        self._model = BayesianVnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
+                                   padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
-        loss_function = variational_free_energy_loss(self._model, train_len / self._batch_size, self._kl_alpha)
+        self._model(tf.ones((self._batch_size, *input_shape)))
+        loss_function = variational_free_energy_loss(self._model, 100 / self._batch_size, self._kl_alpha)
         self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
@@ -89,7 +87,7 @@ class BayesianDetector:
     @staticmethod
     def _get_paths(network_type: str, weights_dir: Path):
         Path(weights_dir).mkdir(parents=True, exist_ok=True)
-        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.0f}.h5")
+        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_acc:.3f}-{val_loss:.3f}.h5")
         return checkpoint_path
 
     @staticmethod
@@ -114,8 +112,4 @@ class BayesianDetector:
         :param dataset: tensorflow dataset object
         :return: input shape
         """
-        return tuple([int(dim.value) for dim in list(dataset.element_spec[0].shape)[1:]])
-
-    @staticmethod
-    def _calculate_train_len():
-        return 100  # TODO How can we calc train len?
+        return tuple(list(dataset.element_spec[0].shape)[1:])
