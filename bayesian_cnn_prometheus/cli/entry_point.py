@@ -1,6 +1,10 @@
 import click
 
+# from bayesian_cnn_prometheus.cli.evaluate import evaluate
 from bayesian_cnn_prometheus.cli.start_training import start_training
+
+
+# from bayesian_cnn_prometheus.cli.analise import analise
 
 
 @click.group()
@@ -11,3 +15,5 @@ def entry_point():
 
 
 entry_point.add_command(start_training)
+# entry_point.add_command(evaluate)
+# entry_point.add_command(analise)
