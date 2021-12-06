@@ -5,7 +5,7 @@ from dataclasses import dataclass, fields
 
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
-from bayesian_cnn_prometheus.evaluation.utils import assert_fields_have_values, load_config
+from bayesian_cnn_prometheus.evaluation.utils import assert_fields_have_values, load_config, get_arg
 
 
 @dataclass
@@ -14,12 +14,12 @@ class EvaluationConfig:
     patient_id: int
 
 
-def evaluate_with_config_scan_id(config_path: Path):
+def get_scan_path_from_config(config_path: Path) -> str:
     app_config = load_config(config_path)
     evaluation_config = EvaluationConfig(**app_config['evaluation'])
-    scan_path = str(Paths.PROJECT_DIR.parent / 'data' /
-                    'IMAGES' / f'IMG_{evaluation_config.patient_id:0>4}.nii.gz')
-    evaluate(Paths.CONFIG_PATH, scan_path)
+    return str(Paths.PROJECT_DIR.parent / 'data' /
+               'IMAGES' / f'IMG_{evaluation_config.patient_id:0>4}.nii.gz')
+
 
 
 def evaluate(config_path: Path, scan_path: str):
@@ -56,4 +56,6 @@ def evaluate(config_path: Path, scan_path: str):
 
 
 if __name__ == '__main__':
-    evaluate_with_config_scan_id(Paths.CONFIG_PATH)
+    config_path = get_arg(1, Paths.CONFIG_PATH)
+    scan_path = get_arg(2, get_scan_path_from_config(Path(config_path)))
+    evaluate(config_path, scan_path)

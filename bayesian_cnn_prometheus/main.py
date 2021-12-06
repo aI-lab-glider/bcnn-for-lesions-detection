@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_config
+from bayesian_cnn_prometheus.evaluation.utils import load_config, get_arg
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
@@ -24,4 +24,7 @@ def train_model(config_path: Path, data_path: Path):
 
 
 if __name__ == '__main__':
-    train_model(Paths.CONFIG_PATH, Paths.DATA_DIR)
+    config_path = get_arg(1, Paths.CONFIG_PATH)
+    data_path = get_arg(2, Paths.DATA_DIR)
+
+    train_model(config_path, data_path)

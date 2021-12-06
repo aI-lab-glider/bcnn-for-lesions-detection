@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import click
@@ -18,4 +19,4 @@ from bayesian_cnn_prometheus.main import train_model
 def start_training(config_path: str, data_path: str):
     print('Jon started submiting a train job ...')
     train_model(Path(config_path), Path(data_path))
-    # os.system(f'sbatch run_python_script.sh {Paths.PROJECT_DIR/"main.py"}')
+    os.system(f'sbatch run_python_script.sh {Paths.PROJECT_DIR / "main.py"} {config_path} {data_path}')

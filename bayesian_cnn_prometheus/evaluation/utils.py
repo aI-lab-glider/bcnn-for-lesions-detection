@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 import nibabel as nib
@@ -54,3 +55,11 @@ def assert_fields_have_values(values_as_dict, required_keys=None):
     unassigned_keys = [
         key for key in required_keys if values_as_dict.get(key, None) is None]
     assert not unassigned_keys, f"no values provided for required keys: {', '.join(unassigned_keys)}"
+
+
+def has_arg(i: int):
+    return len(sys.argv) > i
+
+
+def get_arg(i: int, default=None):
+    return sys.argv[i] if has_arg(i) else default
