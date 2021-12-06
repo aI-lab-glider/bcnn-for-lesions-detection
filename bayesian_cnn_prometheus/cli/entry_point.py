@@ -1,6 +1,6 @@
 import click
 
-from bayesian_cnn_prometheus.cli.analise import analyse
+from bayesian_cnn_prometheus.cli.analyse import analyse
 from bayesian_cnn_prometheus.cli.evaluate import evaluate
 from bayesian_cnn_prometheus.cli.start_training import start_training
 
