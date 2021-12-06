@@ -1,5 +1,7 @@
 from dataclasses import dataclass, fields
+
 from bayesian_cnn_prometheus.analysis.masks_analyzer import MasksAnalyzer
+from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.utils import assert_fields_have_values, load_config
 
 
@@ -10,16 +12,15 @@ class MaskAnalysisConfig:
     variance_masks_path: str
 
 
-def main():
-    app_config = load_config()
-    assert_fields_have_values(app_config.get('mask_analysis', {}), [
-                              field.name for field in fields(MaskAnalysisConfig)])
-    config = MaskAnalysisConfig(**app_config['mask_analysis'])
-
+def analise(model_name: str, variance_masks_path: str, lesion_masks_path: str):
     mask_analyzer = MasksAnalyzer(
-        config.model_name, config.lesion_masks_path, config.variance_masks_path)
+        model_name, lesion_masks_path, variance_masks_path)
     mask_analyzer.perform_analysis(save_to_json=True)
 
 
 if __name__ == '__main__':
-    main()
+    app_config = load_config(Paths.CONFIG_PATH)
+    assert_fields_have_values(app_config.get('mask_analysis', {}), [
+        field.name for field in fields(MaskAnalysisConfig)])
+    config = MaskAnalysisConfig(**app_config['mask_analysis'])
+    analise(config.model_name, config.variance_masks_path, config.lesion_masks_path)

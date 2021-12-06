@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.evaluate_model import evaluate_with_config_scan_id
+from bayesian_cnn_prometheus.evaluation import evaluate_model
 
 
 @click.command(name='eval', help='Evaluates an image by the model')
@@ -17,6 +17,6 @@ from bayesian_cnn_prometheus.evaluation.evaluate_model import evaluate_with_conf
               help='Path to the scan')
 def evaluate(config_path, scan_path):
     if scan_path is None:
-        evaluate_with_config_scan_id(Path(config_path))
+        evaluate_model.evaluate_with_config_scan_id(Path(config_path))
     else:
-        evaluate(Path(config_path), scan_path)
+        evaluate_model.evaluate(Path(config_path), scan_path)
