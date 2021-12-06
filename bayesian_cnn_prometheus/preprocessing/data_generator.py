@@ -1,15 +1,16 @@
 import functools
 import random
 from itertools import product
+from pathlib import Path
 from typing import Dict, Generator, Tuple
 
 import numpy as np
+from dataclasses import dataclass
 
 from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
-from dataclasses import dataclass
 
 
 @dataclass
@@ -20,7 +21,7 @@ class DataGeneratorConfig:
 
 
 class DataGenerator:
-    def __init__(self, preprocessing_config: Dict, batch_size: int):
+    def __init__(self, preprocessing_config: Dict, batch_size: int, data_path: Path):
         """
         Creates PreprocessingPipeline class to preprocess input data according to the config.
         :param preprocessing_config: structure with configuration to use in preprocessing in learning
@@ -28,13 +29,13 @@ class DataGenerator:
         self.batch_size = batch_size
         self.should_normalise = preprocessing_config.get(
             "normalize_images").get("is_activated")
-        self.image_loader = ImageLoader(
-            preprocessing_config.get('transform_nifti_to_npy').get('ext'))
+        self.image_loader = ImageLoader(data_path,
+                                        preprocessing_config.get('transform_nifti_to_npy').get('ext'))
 
         self.config = DataGeneratorConfig(
             **preprocessing_config['create_chunks'])
 
-        self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
+        self.data_splitter = DataSplitter(data_path, preprocessing_config['create_data_structure'],
                                           preprocessing_config['update_healthy_patients_indices'])
         self.dataset_structure = None
 

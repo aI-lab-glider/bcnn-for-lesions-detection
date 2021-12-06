@@ -13,11 +13,13 @@ from bayesian_cnn_prometheus.evaluation.utils import get_patient_index
 
 class DataSplitter:
 
-    def __init__(self, data_structure_config: Dict, should_update_healthy_patience_indices=True):
+    def __init__(self, data_path: Path, data_structure_config: Dict, should_update_healthy_patience_indices=True):
         """
         Creates PreprocessingPipeline class to preprocess input data according to the config.
         :param config: structure with configuration to use in preprocessing in learning
         """
+        self._mask_file_pattern_path = str(data_path / Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_WITH_DIR).format('*',
+                                                                                                                  'nii.gz')
         self.config = data_structure_config
         self.should_update_healthy_patience_indices = should_update_healthy_patience_indices
 
@@ -76,8 +78,7 @@ class DataSplitter:
         Finds indices of healthy patients scans in dataset.
         :return: list of indices
         """
-        masks_paths = glob.glob(
-            str(Paths.MASK_FILE_PATTERN_PATH).format('*', 'nii.gz'))
+        masks_paths = glob.glob(self._mask_file_pattern_path)
         healthy_masks_paths = [
             target_path for target_path in masks_paths if self._is_patient_healthy(target_path)]
         healthy_patients_indices = [get_patient_index(

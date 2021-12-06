@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Generator
 
 import tensorflow as tf
@@ -7,10 +8,10 @@ from bayesian_cnn_prometheus.preprocessing import DataGenerator
 
 class DataLoader:
 
-    def __init__(self, preprocessing_config, batch_size, chunk_size):
+    def __init__(self, preprocessing_config, batch_size, chunk_size, data_path: Path):
         self.batch_size = batch_size
         self.chunk_size = chunk_size
-        self.data_generator = DataGenerator(preprocessing_config, batch_size)
+        self.data_generator = DataGenerator(preprocessing_config, batch_size, data_path)
         self._train_data = None
         self._test_data = None
         self._valid_data = None
