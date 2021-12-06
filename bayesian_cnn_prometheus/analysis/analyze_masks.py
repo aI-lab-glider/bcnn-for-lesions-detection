@@ -13,8 +13,12 @@ class MaskAnalysisConfig:
 
 
 def analise(model_name: str, variance_masks_path: str, lesion_masks_path: str):
-    mask_analyzer = MasksAnalyzer(
-        model_name, lesion_masks_path, variance_masks_path)
+    config = MaskAnalysisConfig(model_name, lesion_masks_path, variance_masks_path)
+    analise_from_config(config)
+
+
+def analise_from_config(config: MaskAnalysisConfig):
+    mask_analyzer = MasksAnalyzer(config.model_name, config.lesion_masks_path, config.variance_masks_path)
     mask_analyzer.perform_analysis(save_to_json=True)
 
 
@@ -23,4 +27,4 @@ if __name__ == '__main__':
     assert_fields_have_values(app_config.get('mask_analysis', {}), [
         field.name for field in fields(MaskAnalysisConfig)])
     config = MaskAnalysisConfig(**app_config['mask_analysis'])
-    analise(config.model_name, config.variance_masks_path, config.lesion_masks_path)
+    analise_from_config(config)
