@@ -17,7 +17,8 @@ class DatasetTypeTargets:
 
 class Paths:
     PROJECT_DIR = Path(bayesian_cnn_prometheus.__file__).parent
-    DATA_DIR = Path('/')/'net'/'pr1'/'plgrid'/'plggonwelo'/'Lung'
+    DATA_DIR = Path('/')/'net'/'pr1'/'plgrid'/'plggonwelo'/'Lung'/'LIDC'
+
 
     CONFIG_PATH = PROJECT_DIR / 'config.local.json'
 
@@ -31,7 +32,7 @@ class Paths:
     IMAGE_FILE_PATTERN = 'IMG_{}.{}'
     IMAGE_FILE_PATTERN_PATH = IMAGES_PATH / IMAGE_FILE_PATTERN
 
-    REFERENCE_SEGMENTATIONS_DIR = 'SEGMENTATIONS'
+    REFERENCE_SEGMENTATIONS_DIR = 'REFERENCE_SEGMENTATIONS'
     REFERENCE_SEGMENTATIONS_PATH = DATA_DIR / REFERENCE_SEGMENTATIONS_DIR
     REFERENCE_SEGMENTATION_FILE_PATTERN = 'LUNGS_IMG_{}.{}'
     REFERENCE_SEGMENTATION_FILE_PATTERN_PATH = REFERENCE_SEGMENTATIONS_PATH / \
