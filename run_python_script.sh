@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 ## Nazwa zlecenia
-#SBATCH -J Bayesian_Vnet_Training
+#SBATCH -J bayesian_prediction
 
 ## Liczba alokowanych węzłów
 #SBATCH -N 1
@@ -13,7 +13,7 @@
 #SBATCH --mem-per-cpu=15GB
 
 ## Maksymalny czas trwania zlecenia (format HH:MM:SS)
-#SBATCH --time=01:00:00
+#SBATCH --time=70:00:00
 
 ## Nazwa grantu do rozliczenia zużycia zasobów
 #SBATCH -A plgonwelo
@@ -43,5 +43,5 @@ source venv/bin/activate
 pip install --upgrade pip
 pip3 install -e .
 
-python3.6 $1
+python3.6 $@
 

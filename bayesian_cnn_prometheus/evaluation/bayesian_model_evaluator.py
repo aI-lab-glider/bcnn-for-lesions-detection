@@ -20,7 +20,7 @@ class BayesianModelEvaluator:
         self.chunk_size = chunk_size
         self.model = self.load_saved_model(weights_path)
 
-    def evaluate(self, image_path: str, samples_num: int, stride: List[int]) -> List[np.ndarray]:
+    def evaluate(self, image_path: str, samples_num: int, stride: Tuple[int, int, int]) -> List[np.ndarray]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image_path: path to the image to predict
@@ -74,7 +74,7 @@ class BayesianModelEvaluator:
         return tuple([slice(dim_start, dim_start + chunk_dim) for (dim_start, chunk_dim) in zip(coord, self.chunk_size[:3])])
 
     @classmethod
-    def save_predictions(cls, patient_id, predictions, affine: np.ndarray, nifti_header, should_perform_binarization: bool) -> None:
+    def save_predictions(cls, dir_path: Path, patient_idx: int, predictions, affine: np.ndarray, nifti_header, should_perform_binarization: bool) -> None:
         """
         Saves predictions list in nifti file.
         :param patient_id: four-digit patient id
@@ -84,12 +84,11 @@ class BayesianModelEvaluator:
         segmentation = cls.get_segmentation_from_mean(
             predictions, should_perform_binarization)
         variance = cls.get_segmentation_variance(predictions)
-        predictions_path = str(Paths.PREDICTION_FILE_PATTERN_PATH).format(
-            patient_id, 'nii.gz')
+        predictions_path = dir_path/Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(segmentation, Path(
             predictions_path), affine, nifti_header)
-        save_as_nifti(variance, Path(str(Paths.VARIANCE_FILE_PATTERN_PATH).format(
-            patient_id, 'nii.gz')), affine, nifti_header)
+        variance_path = dir_path/Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
+        save_as_nifti(variance, variance_path, affine, nifti_header)
 
     @staticmethod
     def get_segmentation_from_mean(predictions, should_perform_binarization=False, threshold=0.463):

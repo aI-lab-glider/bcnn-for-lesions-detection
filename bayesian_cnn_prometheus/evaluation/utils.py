@@ -38,8 +38,8 @@ def get_patient_index(mask_path: str) -> str:
     return mask_path.split('.')[0].split('_')[-1]
 
 
-def load_config():
-    with open(Paths.CONFIG_PATH) as cf:
+def load_config(path: Path = Paths.CONFIG_PATH):
+    with open(path) as cf:
         config = json.load(cf)
     return config
 
