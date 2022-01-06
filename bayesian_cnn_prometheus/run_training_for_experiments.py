@@ -44,7 +44,7 @@ def create_experiment_dir(override: Iterable[Override]):
     experiment_name = "_".join(str(item) for item in override)
     if not os.path.isdir(experiment_name):
         os.mkdir(experiment_name)
-    experiment_dir = Path("experiments")/experiment_name
+    experiment_dir = Path("tf2_experiments")/experiment_name
     if not experiment_dir.exists():
         experiment_dir.mkdir(parents=True)
     return experiment_dir
@@ -73,7 +73,7 @@ def create_sbatch_script(experiment_dir: Path):
     script_name = 'run_python_script'
     with open(f"{script_name}_TEMPLATE.sh", "r", encoding="utf-8") as f:
         contents = f.read()
-        contents = contents.replace('BATCH_NAME', str(experiment_dir))
+        contents = contents.replace('BATCH_NAME', f'tf2_{experiment_dir}')
         contents = contents.replace("OUTPUT_FILE", f"{experiment_dir}/output.out")
         contents = contents.replace("ERROR_FILE", f"{experiment_dir}/error.err")
         contents = contents.replace("VENV_NAME", f"{experiment_dir}/venv")

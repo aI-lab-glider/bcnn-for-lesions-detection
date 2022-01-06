@@ -17,3 +17,4 @@ venv*
 **/error_0.err
 **/output_0.out
 experiments/
+tf2_experiments/
