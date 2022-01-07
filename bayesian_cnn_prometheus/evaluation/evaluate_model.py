@@ -42,14 +42,15 @@ def main():
         ), results_dir)
     
 def get_latest_weights_from_folder(folder: Path):
-    return max(folder.iterdir(), key=os.path.getctime)
+    return Path(max(glob.glob(f'{folder}/*.h5'), key=os.path.getctime))
 
     
 def create_predictions_dir(weights_path: Path):
     weights_folder_name = weights_path.stem.split('.')[:-1]
-    weights_folder_name = f"{''.join(weights_folder_name)}_predictions"
-    Path(weights_folder_name).mkdir(parents=True, exist_ok=True)
-    return Path(weights_folder_name)
+    predictions_folder_name = f"{''.join(weights_folder_name)}_predictions"
+    prediction_path = Path(weights_path.parent)/predictions_folder_name
+    Path(prediction_path).mkdir(parents=True, exist_ok=True)
+    return prediction_path
 
 @dataclass
 class PredictionOptions:
