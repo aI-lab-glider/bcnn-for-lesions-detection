@@ -20,6 +20,7 @@ class EvaluationConfig:
 
 
 def get_patients_to_predict():
+    
     idxs_with_lesions = [3,4,5,6,8,10,11,14,17,21,26,27,29,30,32,34,35,36,37,39,41,42,43,44,45,46,48,49,50,51,53,54,
     58,59,63,65,66,67,68,69,71,73,75,78,80,81,83,85,89,93,94,96,97,98,99,101,102,104,105,106,107,108,109,111,112,114,116,118,
     119,120,122,123,127,128,134,138,139,141,148,150,152,155,157,158,160,164,166,167,168,
@@ -32,14 +33,16 @@ def main():
     folder = Path(sys.argv[1])
     model_config = load_config(folder/'config.json')
     weights_path = get_latest_weights_from_folder(folder)
+    
     results_dir = create_predictions_dir(weights_path)
     pacient_idxs = get_patients_to_predict()
-    for idx in pacient_idxs:
-        make_prediction(weights_path, idx, PredictionOptions(
+    prediction_options = PredictionOptions(
             chunk_size=model_config['preprocessing']['create_chunks']['chunk_size'],
             stride=model_config['preprocessing']['create_chunks']['stride'],
             mc_sample=model_config['mc_samples']
-        ), results_dir)
+        )
+    for idx in pacient_idxs:
+        make_prediction(weights_path, idx, prediction_options, results_dir)
     
 def get_latest_weights_from_folder(folder: Path):
     return Path(max(glob.glob(f'{folder}/*.h5'), key=os.path.getctime))

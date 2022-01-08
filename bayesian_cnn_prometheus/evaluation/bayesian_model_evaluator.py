@@ -64,7 +64,7 @@ class BayesianModelEvaluator:
             for y in range(0, origin_y, stride_y)[:-1]:
                 for z in range(0, origin_z, stride_z)[:-1]:
                     chunk = array[self._get_window((x, y, z))]
-                    if chunk.shape == self.chunk_size[:3]:
+                    if chunk.shape == tuple(self.chunk_size[:3]):
                         chunks.append(chunk)
                         coords.append((x, y, z))
 
@@ -85,8 +85,7 @@ class BayesianModelEvaluator:
             predictions, should_perform_binarization)
         variance = cls.get_segmentation_variance(predictions)
         predictions_path = dir_path/Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
-        save_as_nifti(segmentation, Path(
-            predictions_path), affine, nifti_header)
+        save_as_nifti(segmentation, predictions_path, affine, nifti_header)
         variance_path = dir_path/Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(variance, variance_path, affine, nifti_header)
 
