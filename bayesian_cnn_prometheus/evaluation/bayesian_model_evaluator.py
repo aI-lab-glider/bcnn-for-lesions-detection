@@ -8,10 +8,14 @@ from tqdm import tqdm
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
+from tensorflow.python.compiler.tensorrt import trt_convert as trt
 
 
 class BayesianModelEvaluator:
-    def __init__(self, weights_path: str, chunk_size: Tuple = (32, 32, 16)):
+
+    _compiled_model_prefix = 'compiled_'
+
+    def __init__(self, weights_path: Path, chunk_size: Tuple = (32, 32, 16)):
         """
         Creates BayesianModelEvaluator object to evaluate bayesian model.
         :param weights_path: path to bayesian model weights in h5 format
@@ -47,7 +51,7 @@ class BayesianModelEvaluator:
             predictions.append(prediction / np.maximum(count_prediction, 1))
         return predictions
 
-    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
+    def _create_chunks(self, array: np.ndarray, stride: Tuple[int, ...]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
@@ -84,9 +88,11 @@ class BayesianModelEvaluator:
         segmentation = cls.get_segmentation_from_mean(
             predictions, should_perform_binarization)
         variance = cls.get_segmentation_variance(predictions)
-        predictions_path = dir_path/Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
+        predictions_path = dir_path / \
+            Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(segmentation, predictions_path, affine, nifti_header)
-        variance_path = dir_path/Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
+        variance_path = dir_path / \
+            Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(variance, variance_path, affine, nifti_header)
 
     @staticmethod
@@ -101,16 +107,32 @@ class BayesianModelEvaluator:
     def get_segmentation_variance(predictions):
         return np.var(predictions, axis=0)
 
-    def load_saved_model(self, weights_path: str) -> BayesianVnet:
+    def load_saved_model(self, weights_path: Path) -> BayesianVnet:
         """
         Loads bayesian model.
         :param weights_path: path to bayesian model weights in h5 format
         :return: keras model with loaded weights
         """
+        if not self.is_compiled_model(weights_path):
+            weights_path = self.compile_model(weights_path)
+
         model = BayesianVnet((*self.chunk_size, 1),
                              kernel_size=3,
                              activation='relu',
                              padding='SAME',
                              prior_std=1)
-        model.load_weights(weights_path)
+        model.load_weights(str(weights_path))
         return model
+
+    def is_compiled_model(self, weights_path: Path):
+        return self._compiled_model_prefix in weights_path.stem
+
+    def compile_model(self, weights_path: Path):
+        compiled_model_path = self.get_compiled_model_path(weights_path)
+        converter = trt.TrtGraphConverterV2(input_saved_model_dir=weights_path)
+        converter.convert()
+        converter.save(compiled_model_path)
+        return compiled_model_path
+
+    def get_compiled_model_path(self, weights_path: Path):
+        return weights_path.parent/f'{self._compiled_model_prefix}{weights_path.stem}{weights_path.suffix}'
