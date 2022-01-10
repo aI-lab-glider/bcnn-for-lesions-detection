@@ -1,13 +1,12 @@
-import nibabel as nib
 from pathlib import Path
 from typing import Tuple, List
 
 import numpy as np
-from tqdm import tqdm
-
+import tensorflow as tf
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.utils import load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
+from tqdm import tqdm
 
 
 class BayesianModelEvaluator:
@@ -30,24 +29,32 @@ class BayesianModelEvaluator:
         """
         image = load_nifti_file(image_path)
         image = standardize_image(image)
+
         image_chunks, coords = self._create_chunks(image, stride)
+        image_chunks = np.array(image_chunks)
+        image_chunks = image_chunks.reshape(*image_chunks.shape, 1)
+
         predictions = []
         for _ in tqdm(range(samples_num)):
             prediction = np.zeros(image.shape)
             count_prediction = np.zeros(image.shape)
 
-            for chunk, coord in zip(image_chunks, coords):
-                reshaped_chunk = chunk.reshape(1, *chunk.shape, 1)
-                chunk_pred = self.model.predict(reshaped_chunk)
-                reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
+            chunk_preds = self.make_preds(image_chunks).numpy()
+            reshaped_chunk_preds = [chunk_pred.reshape(*image_chunks[0].shape[:-1]) for chunk_pred in list(chunk_preds.reshape(chunk_preds.shape[:-1]))]
 
+            for coord, reshaped_chunk_pred in zip(coords, reshaped_chunk_preds):
                 prediction[self._get_window(coord)] += reshaped_chunk_pred
-                count_prediction[self._get_window(
-                    coord)] += np.ones(chunk.shape)
+                count_prediction[self._get_window(coord)] += np.ones(reshaped_chunk_pred.shape)
+
             predictions.append(prediction / np.maximum(count_prediction, 1))
         return predictions
 
-    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
+    @tf.function
+    def make_preds(self, array):
+        return self.model(array)
+
+    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[
+        List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
@@ -71,10 +78,12 @@ class BayesianModelEvaluator:
         return chunks, coords
 
     def _get_window(self, coord: Tuple[int, int, int]) -> Tuple[slice, ...]:
-        return tuple([slice(dim_start, dim_start + chunk_dim) for (dim_start, chunk_dim) in zip(coord, self.chunk_size[:3])])
+        return tuple(
+            [slice(dim_start, dim_start + chunk_dim) for (dim_start, chunk_dim) in zip(coord, self.chunk_size[:3])])
 
     @classmethod
-    def save_predictions(cls, dir_path: Path, patient_idx: int, predictions, affine: np.ndarray, nifti_header, should_perform_binarization: bool) -> None:
+    def save_predictions(cls, dir_path: Path, patient_idx: int, predictions, affine: np.ndarray, nifti_header,
+                         should_perform_binarization: bool) -> None:
         """
         Saves predictions list in nifti file.
         :param patient_id: four-digit patient id
@@ -84,9 +93,10 @@ class BayesianModelEvaluator:
         segmentation = cls.get_segmentation_from_mean(
             predictions, should_perform_binarization)
         variance = cls.get_segmentation_variance(predictions)
-        predictions_path = dir_path/Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
+        dir_path = Path('/Users/sol/Documents/3d-cnn-prometheus/experiments/stride_64_64_32_shuffle_True/bayesian-13-0_predictions')
+        predictions_path = dir_path / Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(segmentation, predictions_path, affine, nifti_header)
-        variance_path = dir_path/Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
+        variance_path = dir_path / Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(variance, variance_path, affine, nifti_header)
 
     @staticmethod
