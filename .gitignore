@@ -18,3 +18,4 @@ venv*
 **/output_0.out
 experiments/
 tf2_experiments/
+.mypy_cache/

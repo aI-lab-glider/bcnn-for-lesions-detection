@@ -37,11 +37,11 @@ srun /bin/hostname
 module load plgrid/tools/python/3.8
 module load plgrid/apps/cuda/11.2
 
-python3.6 -m venv VENV_NAME
+python3 -m venv VENV_NAME
 source VENV_NAME/bin/activate
 
 pip install --upgrade pip
 pip install -e .
 
-python3.6 $@
+python $@
 
