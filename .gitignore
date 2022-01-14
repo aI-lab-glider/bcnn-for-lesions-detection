@@ -19,3 +19,4 @@ venv*
 experiments/
 tf2_experiments/
 .mypy_cache/
+data

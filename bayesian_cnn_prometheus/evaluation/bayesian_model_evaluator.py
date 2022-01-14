@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, List, NewType
+from typing import Generator, Iterable, Tuple, List, NewType
 import numpy as np
 import tensorflow as tf
 from bayesian_cnn_prometheus.constants import Paths
@@ -32,31 +32,46 @@ class BayesianModelEvaluator:
         image = load_nifti_file(image_path)
         image = standardize_image(image)
 
-        image_chunks, coords = self._create_chunks(image, stride)
-
+        dataset = self._create_chunks_dataset(image, stride)
         model = self.load_saved_model(self.weights_path, self.chunk_size)
         model = tf.function(model)
+        self.evaluate_predictions(samples_num, model, dataset)
+        # predictions = []
 
-        predictions = []
+        # for _ in tqdm(range(samples_num)):
+        #     prediction = np.zeros(image.shape)
+        #     count_prediction = np.zeros(image.shape)
 
-        for _ in tqdm(range(samples_num)):
-            prediction = np.zeros(image.shape)
-            count_prediction = np.zeros(image.shape)
+        #     for chunk, coord in zip(image_chunks, coords):
+        #         reshaped_chunk = chunk.reshape(1, *chunk.shape, 1)
+        #         chunk_pred = model(reshaped_chunk).numpy()
+        #         reshaped_chunk_pred = chunk_pred.reshape(*chunk.shape)
 
-            chunk_preds = model(image_chunks).numpy()
-            reshaped_chunk_preds = [
-                chunk_pred.reshape(*image_chunks[0].shape[: -1])
-                for chunk_pred in list(chunk_preds.reshape(chunk_preds.shape[: -1]))]
+        #         prediction[self._get_window(coord)] += reshaped_chunk_pred
+        #         count_prediction[self._get_window(
+        #             coord)] += np.ones(chunk.shape)
+        #     predictions.append(prediction / np.maximum(count_prediction, 1))
+        # return predictions
 
-            for coord, reshaped_chunk_pred in zip(coords, reshaped_chunk_preds):
-                prediction[self._get_window(coord)] += reshaped_chunk_pred
-                count_prediction[self._get_window(coord)] += np.ones(reshaped_chunk_pred.shape)
 
-            predictions.append(prediction / np.maximum(count_prediction, 1))
-        return predictions
+    @tf.function
+    def evaluate_predictions(self, samples_num, model, dataset):
+        for _ in tf.range(samples_num):
+            tf.print(tf.timestamp())
+            for chunk, coord in dataset:
+                predictions = model(chunk)
+    
+    def _create_chunks_dataset(self, array: np.ndarray, stride: Stride) -> Iterable[Tuple[
+            np.ndarray, Window]]: 
+        return tf.data.Dataset.from_generator(
+            lambda: self._chunks_generator(array, stride),
+            output_signature=(
+                tf.TensorSpec(shape=(None, *self.chunk_size[:3], 1), dtype=tf.int32), 
+                tf.TensorSpec(shape=(None, 3), dtype=tf.int32), 
+            ))
 
-    def _create_chunks(self, array: np.ndarray, stride: Stride) -> Tuple[
-            np.ndarray, List[Window]]:
+    def _chunks_generator(self, array: np.ndarray, stride: Stride) -> Iterable[Tuple[
+            np.ndarray, List[Window]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
@@ -66,21 +81,13 @@ class BayesianModelEvaluator:
         origin_x, origin_y, origin_z = array.shape
         stride_x, stride_y, stride_z = stride
 
-        chunks = []
-        coords = []
 
         for x in range(0, origin_x, stride_x)[: -1]:
             for y in range(0, origin_y, stride_y)[: -1]:
-                for z in range(0, origin_z, stride_z)[: -1]:
-                    chunk = array[self._get_window((x, y, z))]
-                    if chunk.shape == tuple(self.chunk_size[: 3]):
-                        chunks.append(chunk)
-                        coords.append((x, y, z))
-
-        image_chunks = np.array(chunks)
-        image_chunks = image_chunks.reshape(*image_chunks.shape, 1)
-
-        return image_chunks, coords
+                z_range = range(0, origin_z, stride_z)[: -1]
+                chunks = [array[self._get_window((x, y, z))] for z in z_range]
+                coords = [(x, y, z) for z in z_range]
+                yield np.array(chunks)[..., None], coords
 
     def _get_window(self, coord: Window) -> Tuple[slice, ...]:
         return tuple(
