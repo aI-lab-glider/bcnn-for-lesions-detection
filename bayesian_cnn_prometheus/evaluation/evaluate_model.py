@@ -6,7 +6,7 @@ from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import Bayesian
 import nibabel as nib
 from dataclasses import dataclass
 
-from bayesian_cnn_prometheus.evaluation.utils import load_config
+from bayesian_cnn_prometheus.evaluation.utils import load_config, save_as_nifti
 import random
 import os
 import glob
@@ -70,6 +70,8 @@ class PredictionOptions:
 def make_prediction(weights_path: Path, patient_idx, prediction_options: PredictionOptions, results_dir: Path):
     image_path = str(Paths.IMAGE_FILE_PATTERN_PATH).format(
         f'{patient_idx:0>4}', 'nii.gz')
+    segmentation_path = str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_PATH).format(
+        f'{patient_idx:0>4}', 'nii.gz')
 
     image = nib.load(image_path)
     model_evaluator = BayesianModelEvaluator(
@@ -77,10 +79,13 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
         prediction_options.chunk_size
     )
 
-    predictions = model_evaluator.evaluate(
+    bb_box, predictions = model_evaluator.evaluate(
         image_path,
+        segmentation_path,
         prediction_options.mc_sample,
         prediction_options.stride)
+    
+    save_as_nifti(bb_box, results_dir/f'LUNGS_BOUNDING_BOX_{patient_idx}', image.affine, image.header)
 
     model_evaluator.save_predictions(
         results_dir,

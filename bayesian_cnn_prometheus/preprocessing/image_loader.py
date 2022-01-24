@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Tuple
-from bayesian_cnn_prometheus.evaluation.utils import standardize_image
+from bayesian_cnn_prometheus.evaluation.utils import load_lungs_mask, standardize_image
 
 import nibabel as nib
 import numpy as np
 
 from bayesian_cnn_prometheus.constants import Paths
 
-
+# TODO
 class ImageLoader:
 
     def __init__(self, ext: str = 'nii.gz'):
@@ -21,14 +21,8 @@ class ImageLoader:
         """
         image_file_path, target_file_path = self._get_files_names(
             image_index, 'nii.gz')
-        target = self._load_image(target_file_path)
         image = self._load_image(image_file_path)
-        return image, self._unify_segmentation_labels(target)
-
-    @staticmethod
-    def _unify_segmentation_labels(image):
-        image[image == 1] = 0  # to remove trachea
-        return image.astype(bool).astype('int16')
+        return image, load_lungs_mask(str(target_file_path))
 
     def _load_image(self, path):
         if self.extension == 'nii.gz':

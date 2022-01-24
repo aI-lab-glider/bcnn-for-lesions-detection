@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Callable, Tuple, Dict
 
 import math
 import tensorflow as tf
@@ -90,7 +90,7 @@ class BayesianDetector:
         return checkpoint_path
 
     @staticmethod
-    def _get_scheduler(lr_decay_start_epoch: int) -> float:
+    def _get_scheduler(lr_decay_start_epoch: int) -> Callable[[int, float], float]:
         """
         Defines exponentially decaying learning rate.
         :param lr_decay_start_epoch: epoch number since the learning rate is decaying
