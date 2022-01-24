@@ -6,6 +6,12 @@ import numpy as np
 from bayesian_cnn_prometheus.constants import Paths
 
 
+def load_lungs_mask(path: str) -> np.ndarray:
+    image = load_nifti_file(path)
+    # image[image == 1] = 0  # to remove trachea
+    return image.astype(bool).astype('int16')
+
+
 def load_nifti_file(file_path: str) -> np.ndarray:
     nifti = nib.load(file_path)
     return nifti.get_fdata()
