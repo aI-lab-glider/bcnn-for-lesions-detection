@@ -57,7 +57,8 @@ class BayesianDetector:
         self._model = BayesianVnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
                                     padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
-        loss_function = variational_free_energy_loss(self._kl_alpha)
+        self._model(tf.ones((self._batch_size, *input_shape)))
+        loss_function = variational_free_energy_loss(self._model, self._kl_alpha)
         self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
@@ -78,7 +79,6 @@ class BayesianDetector:
         return K.variable(kl_alpha)
 
     def fit(self, training_dataset, validation_dataset):
-        print('Fitting the model...')
         self._model.fit(x=training_dataset, epochs=self._epochs, initial_epoch=self._initial_epoch,
                         callbacks=[self._checkpointer, self._scheduler, self._annealer],
                         validation_data=validation_dataset.repeat(), validation_steps=self._validation_steps)
@@ -100,6 +100,7 @@ class BayesianDetector:
         def schedule(epoch: int, initial_learning_rate: float):
             if epoch >= lr_decay_start_epoch:
                 initial_learning_rate *= math.exp((10 * initial_learning_rate) * (lr_decay_start_epoch - epoch))
+            print('Learning rate: ', initial_learning_rate)
             return initial_learning_rate
 
         return schedule

@@ -10,7 +10,7 @@ from tqdm import tqdm
 Window = Tuple[int, int, int]
 Stride = Tuple[int, int, int]
 
-
+tf.python.framework_ops.disable_eager_execution()
 class BayesianModelEvaluator:
     def __init__(self, weights_path: str, chunk_size: Tuple = (32, 32, 16)):
         """

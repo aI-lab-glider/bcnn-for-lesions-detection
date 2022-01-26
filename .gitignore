@@ -20,3 +20,5 @@ experiments/
 tf2_experiments/
 .mypy_cache/
 data
+all_patients_2/
+with_custom_loss/

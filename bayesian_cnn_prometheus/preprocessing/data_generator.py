@@ -26,10 +26,9 @@ class DataGenerator:
         :param preprocessing_config: structure with configuration to use in preprocessing in learning
         """
         self.batch_size = batch_size
-        self.should_normalise = preprocessing_config.get(
-            "normalize_images").get("is_activated")
+        self.should_normalise = preprocessing_config["normalize_images"]["is_activated"]
         self.image_loader = ImageLoader(
-            preprocessing_config.get('transform_nifti_to_npy').get('ext'))
+            preprocessing_config['transform_nifti_to_npy']['ext'])
 
         self.config = DataGeneratorConfig(
             **preprocessing_config['create_chunks'])
@@ -59,9 +58,10 @@ class DataGenerator:
         :param batch_size: number of chunks in one batch
         :return: generator that produces array with chunks
         """
+        print('Idxs for dataset type ', dataset_type, self.dataset_structure[dataset_type])
         for image_index in self.dataset_structure[dataset_type]:
             x_npy, y_npy = self.image_loader.load(image_index)
-            x_npy_norm = DataGenerator._normalize(
+            x_npy_norm = DataGenerator.normalize(
                 x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
             for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
@@ -75,8 +75,8 @@ class DataGenerator:
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
-    def _generate_chunks(self, dataset: np.ndarray, chunk_size: tuple = (32, 32, 16),
-                         stride: tuple = (16, 16, 8)) -> Generator[np.ndarray, None, None]:
+    def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int,int,int],
+                         stride: Tuple[int,int,int]) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
         :param dataset: single subset of data (or labels)
@@ -101,12 +101,10 @@ class DataGenerator:
     @staticmethod
     def _get_axis_coords_list(origin_shape, chunk_shape, stride, should_shuffle: bool):
         coords = list(range(chunk_shape, origin_shape - chunk_shape, stride))
-        if should_shuffle:
-            random.shuffle(coords)
         return coords
 
     @staticmethod
-    def _normalize(image: np.ndarray) -> np.ndarray:
+    def normalize(image: np.ndarray) -> np.ndarray:
         """
         Transforms data to have mean 0 and std 1 (standardize).
         :param image: non-standardized image to transform

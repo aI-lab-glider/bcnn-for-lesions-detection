@@ -27,19 +27,24 @@ class DataSplitter:
         :return: dict with dataset types and their indices
         """
         patients_indices_to_train = self._get_indices_for_training()
+        
         patients_number = len(patients_indices_to_train)
+
         parts_sum = self.config['train_part'] + \
             self.config['valid_part'] + self.config['test_part']
 
         valid_part = int(self.config['valid_part']
                          * patients_number / parts_sum)
+        
         valid_indices_len = max(valid_part, 1)
 
         test_part = int(self.config['test_part'] * patients_number / parts_sum)
+
         test_indices_len = max(test_part, 1)
 
         train_indices_len = patients_number - valid_indices_len - test_indices_len
 
+        print(train_indices_len)
         return {
             DatasetType.TRAIN: patients_indices_to_train[:train_indices_len],
             DatasetType.VALID: patients_indices_to_train[

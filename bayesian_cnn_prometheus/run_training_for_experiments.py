@@ -10,6 +10,8 @@ import copy
 import os
 from bayesian_cnn_prometheus.constants import Paths
 
+EXPERIMENTS_DIR = 'all_patients_2' 
+
 @dataclass
 class Override:
     key: str
@@ -44,7 +46,7 @@ def create_experiment_dir(override: Iterable[Override]):
     experiment_name = "_".join(str(item) for item in override)
     if not os.path.isdir(experiment_name):
         os.mkdir(experiment_name)
-    experiment_dir = Path("tf2_experiments")/experiment_name
+    experiment_dir = Path(EXPERIMENTS_DIR)/experiment_name
     if not experiment_dir.exists():
         experiment_dir.mkdir(parents=True)
     return experiment_dir
@@ -64,7 +66,7 @@ def run_tests(combinations_to_test):
             experiment_config = create_config(str(experiment_dir), override)
             config_path = save_experiment_config(experiment_config, experiment_dir)
             sbatch_script_path = create_sbatch_script(experiment_dir) 
-            os.system(f'sbatch {sbatch_script_path} {Paths.PROJECT_DIR/"main.py"} {config_path}')
+            os.system(f'python {Paths.PROJECT_DIR/"main.py"} {config_path}')
             print('Submitted ', experiment_dir)
 
 
@@ -73,7 +75,7 @@ def create_sbatch_script(experiment_dir: Path):
     script_name = 'run_python_script'
     with open(f"{script_name}_TEMPLATE.sh", "r", encoding="utf-8") as f:
         contents = f.read()
-        contents = contents.replace('BATCH_NAME', f'tf2_{experiment_dir}')
+        contents = contents.replace('BATCH_NAME', f'{experiment_dir}')
         contents = contents.replace("OUTPUT_FILE", f"{experiment_dir}/output.out")
         contents = contents.replace("ERROR_FILE", f"{experiment_dir}/error.err")
         contents = contents.replace("VENV_NAME", f"{experiment_dir}/venv")
@@ -91,7 +93,7 @@ if __name__ == '__main__':
             'key': 'preprocessing.create_chunks.stride',
             'values': [
                 [32,32,16],
-                [64,64,32]
+                # [64,64,32]
 
             ]
         },
