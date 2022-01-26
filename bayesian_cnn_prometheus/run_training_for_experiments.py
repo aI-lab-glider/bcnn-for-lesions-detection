@@ -1,16 +1,18 @@
-from pathlib import Path
-from itertools import product
-import json
-from os import mkdir
-from typing import Any, Iterable, List, Optional
-from dataclasses import dataclass
-import operator
-from functools import reduce
 import copy
+import json
+import operator
 import os
+from dataclasses import dataclass
+from functools import reduce
+from itertools import product
+from os import mkdir
+from pathlib import Path
+from typing import Any, Iterable, List, Optional
+
 from bayesian_cnn_prometheus.constants import Paths
 
-EXPERIMENTS_DIR = 'all_patients_2' 
+EXPERIMENTS_DIR = 'health_patients_10'
+
 
 @dataclass
 class Override:
@@ -24,7 +26,7 @@ class Override:
         parent = reduce(operator.getitem, path[:-1], config)
         parent[path[-1]] = self.value
         return config
-    
+
     def __str__(self) -> str:
         if isinstance(self.value, list):
             value = '_'.join(str(i) for i in self.value)
@@ -42,14 +44,16 @@ def create_config(weights_dir: str, overrides: Iterable[Override]):
     config['weights_dir'] = weights_dir
     return config
 
+
 def create_experiment_dir(override: Iterable[Override]):
     experiment_name = "_".join(str(item) for item in override)
     if not os.path.isdir(experiment_name):
         os.mkdir(experiment_name)
-    experiment_dir = Path(EXPERIMENTS_DIR)/experiment_name
+    experiment_dir = Path(EXPERIMENTS_DIR) / experiment_name
     if not experiment_dir.exists():
         experiment_dir.mkdir(parents=True)
     return experiment_dir
+
 
 def save_experiment_config(experiment_config, experiment_dir):
     path_to_config = f'{experiment_dir}/config.json'
@@ -60,15 +64,16 @@ def save_experiment_config(experiment_config, experiment_dir):
 
 def run_tests(combinations_to_test):
     for combination in combinations_to_test:
-        overrides = [[Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] for override in combination]
+        overrides = [
+            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] for
+            override in combination]
         for override in product(*overrides):
             experiment_dir = create_experiment_dir(override)
             experiment_config = create_config(str(experiment_dir), override)
             config_path = save_experiment_config(experiment_config, experiment_dir)
-            sbatch_script_path = create_sbatch_script(experiment_dir) 
-            os.system(f'python {Paths.PROJECT_DIR/"main.py"} {config_path}')
+            sbatch_script_path = create_sbatch_script(experiment_dir)
+            os.system(f'sbatch {sbatch_script_path} {Paths.PROJECT_DIR / "main.py"} {config_path}')
             print('Submitted ', experiment_dir)
-
 
 
 def create_sbatch_script(experiment_dir: Path):
@@ -87,22 +92,15 @@ def create_sbatch_script(experiment_dir: Path):
 
 if __name__ == '__main__':
     combinations_to_test = [
-    [
-        {
-            'alias': 'stride',
-            'key': 'preprocessing.create_chunks.stride',
-            'values': [
-                [32,32,16],
-                # [64,64,32]
+        [
+            {
+                'alias': 'stride',
+                'key': 'preprocessing.create_chunks.stride',
+                'values': [
+                    [64, 64, 32]
 
-            ]
-        },
-        {
-            'alias': 'shuffle',
-            'key': 'preprocessing.create_chunks.should_shuffle',
-            'values': [True]
-        },
+                ]
+            },
         ]
     ]
     run_tests(combinations_to_test)
-

@@ -1,5 +1,5 @@
 import functools
-import random
+from dataclasses import dataclass
 from itertools import product
 from typing import Dict, Generator, Tuple
 
@@ -9,7 +9,6 @@ from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
-from dataclasses import dataclass
 
 
 @dataclass
@@ -75,8 +74,8 @@ class DataGenerator:
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
-    def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int,int,int],
-                         stride: Tuple[int,int,int]) -> Generator[np.ndarray, None, None]:
+    def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int, int, int],
+                         stride: Tuple[int, int, int]) -> Generator[np.ndarray, None, None]:
         """
         Generates chunks from the original data (numpy array).
         :param dataset: single subset of data (or labels)
@@ -92,14 +91,14 @@ class DataGenerator:
                 yield chunk
 
     def _get_coords(self, dataset, chunk_size, stride):
-        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride, self.config.should_shuffle)
+        x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride)
                                         for origin_shape, chunk_shape, stride in zip(dataset.shape, chunk_size, stride)]
 
         for coords in product(x_coords, y_coords, z_coords):
             yield coords
 
     @staticmethod
-    def _get_axis_coords_list(origin_shape, chunk_shape, stride, should_shuffle: bool):
+    def _get_axis_coords_list(origin_shape, chunk_shape, stride):
         coords = list(range(chunk_shape, origin_shape - chunk_shape, stride))
         return coords
 

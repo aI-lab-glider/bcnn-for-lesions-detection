@@ -13,7 +13,7 @@
       "test_part": 0.1
     },
     "create_chunks": {
-      "should_shuffle": true,
+      "should_shuffle": false,
       "chunk_size": [
         64,
         64,
