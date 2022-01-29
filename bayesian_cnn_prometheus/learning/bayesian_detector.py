@@ -61,8 +61,8 @@ class BayesianDetector:
                                    padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
         self._model(tf.ones((self._batch_size, *input_shape)))
-        loss_function = variational_free_energy_loss(self._model, self._kl_alpha)
-        self._model.compile(loss=loss_function, optimizer=Adam(), metrics=["accuracy"])
+        # loss_function = variational_free_energy_loss(self._model, self._kl_alpha)
+        self._model.compile(loss='categorical_crossentropy', optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
         self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)
