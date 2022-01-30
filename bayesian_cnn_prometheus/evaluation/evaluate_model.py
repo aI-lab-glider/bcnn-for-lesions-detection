@@ -1,16 +1,15 @@
+import glob
+import os
+import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
+import nibabel as nib
+
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
-import nibabel as nib
-from dataclasses import dataclass
-
 from bayesian_cnn_prometheus.evaluation.utils import load_config, save_as_nifti
-import random
-import os
-import glob
-import sys
 
 
 @dataclass
@@ -84,8 +83,8 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
         segmentation_path,
         prediction_options.mc_sample,
         prediction_options.stride)
-    
-    save_as_nifti(bb_box, results_dir/f'LUNGS_BOUNDING_BOX_{patient_idx}', image.affine, image.header)
+
+    save_as_nifti(bb_box, results_dir / f'LUNGS_BOUNDING_BOX_{patient_idx}', image.affine, image.header)
 
     model_evaluator.save_predictions(
         results_dir,

@@ -1,16 +1,18 @@
 from pathlib import Path
-from typing import Generator, Iterable, Tuple, List, NewType
+from typing import Tuple, List
+
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
+
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.utils import load_lungs_mask, load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
-from tqdm import tqdm
 
 Window = Tuple[int, int, int]
 Stride = Tuple[int, int, int]
 
-tf.python.framework_ops.disable_eager_execution()
+
 class BayesianModelEvaluator:
     def __init__(self, weights_path: str, chunk_size: Tuple = (32, 32, 16)):
         """
@@ -21,7 +23,8 @@ class BayesianModelEvaluator:
         self.chunk_size = chunk_size
         self.weights_path = weights_path
 
-    def evaluate(self, image_path: str, segmentation_path: str, samples_num: int, stride: Stride) -> Tuple[np.ndarray, List[np.ndarray]]:
+    def evaluate(self, image_path: str, segmentation_path: str, samples_num: int, stride: Stride) -> Tuple[
+        np.ndarray, List[np.ndarray]]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image_path: path to the image to predict
@@ -52,8 +55,8 @@ class BayesianModelEvaluator:
                 prediction[self._get_window(coord)] += reshaped_chunk_pred
                 count_prediction[self._get_window(
                     coord)] += np.ones(chunk.shape)
-            predictions.append(prediction / np.maximum(count_prediction, 1))  
-      
+            predictions.append(prediction / np.maximum(count_prediction, 1))
+
         return image, predictions
 
     def crop_image_to_bounding_box_with_lungs(self, image, lungs_segmentation_path: str):
@@ -65,11 +68,9 @@ class BayesianModelEvaluator:
         idxs = np.nonzero(mask)
         starts = [min(idxs[i]) for i in range(mask.ndim)]
         ends = [max(idxs[i]) for i in range(mask.ndim)]
-        return tuple(slice(s,e) for s,e in zip(starts,ends))
+        return tuple(slice(s, e) for s, e in zip(starts, ends))
 
-    
-    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[
-        List[np.ndarray], List[Tuple[int, int, int]]]:
+    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)
@@ -79,6 +80,8 @@ class BayesianModelEvaluator:
         origin_x, origin_y, origin_z = array.shape
         stride_x, stride_y, stride_z = stride
 
+        chunks = []
+        coords = []
 
         for x in range(0, origin_x, stride_x)[:-1]:
             for y in range(0, origin_y, stride_y)[:-1]:

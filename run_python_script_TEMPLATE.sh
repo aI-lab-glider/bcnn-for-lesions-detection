@@ -13,7 +13,7 @@
 #SBATCH --mem-per-cpu=15GB
 
 ## Maksymalny czas trwania zlecenia (format HH:MM:SS)
-#SBATCH --time=12:00:00
+#SBATCH --time=70:00:00
 
 ## Nazwa grantu do rozliczenia zużycia zasobów
 #SBATCH -A plgonwelo
