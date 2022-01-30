@@ -12,3 +12,12 @@ weights/
 */config.local.json
 .env
 weights_tf_1/
+venv*
+**/error_0.err
+**/output_0.out
+experiments/
+tf2_experiments/
+.mypy_cache/
+data
+all_patients_2/
+with_custom_loss/

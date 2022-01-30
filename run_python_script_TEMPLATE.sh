@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 ## Nazwa zlecenia
-#SBATCH -J Bayesian_Vnet_Training
+#SBATCH -J BATCH_NAME
 
 ## Liczba alokowanych węzłów
 #SBATCH -N 1
@@ -13,7 +13,7 @@
 #SBATCH --mem-per-cpu=15GB
 
 ## Maksymalny czas trwania zlecenia (format HH:MM:SS)
-#SBATCH --time=01:00:00
+#SBATCH --time=70:00:00
 
 ## Nazwa grantu do rozliczenia zużycia zasobów
 #SBATCH -A plgonwelo
@@ -23,10 +23,10 @@
 #SBATCH --gres=gpu
 
 ## Plik ze standardowym wyjściem
-#SBATCH --output="output_0.out"
+#SBATCH --output="OUTPUT_FILE"
 
 ## Plik ze standardowym wyjściem błędów
-#SBATCH --error="error_0.err"
+#SBATCH --error="ERROR_FILE"
 
 
 ## przejscie do katalogu z ktorego wywolany zostal sbatch
@@ -37,11 +37,11 @@ srun /bin/hostname
 module load plgrid/tools/python/3.8
 module load plgrid/apps/cuda/11.2
 
-python3.6 -m venv venv
-source venv/bin/activate
+python3 -m venv VENV_NAME
+source VENV_NAME/bin/activate
 
 pip install --upgrade pip
-pip3 install -e .
+pip install -e .
 
-python3.6 $1
+python $@
 

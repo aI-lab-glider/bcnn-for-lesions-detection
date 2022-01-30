@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.losses import binary_crossentropy
+from tensorflow.python.keras.losses import kl_divergence
 
 
 def round_down(num, factor):
@@ -38,17 +39,17 @@ def standardize(raw):
     return (raw - np.mean(raw)) / np.std(raw)
 
 
-def variational_free_energy_loss(model, scale_factor, kl_alpha):
+def variational_free_energy_loss(model, kl_alpha):
     """
     Defines variational free energy loss.
     Sum of KL divergence (supplied by tfp) and binary cross-entropy.
     """
 
-    kl = sum(model.losses) / scale_factor
-
+    kl_sum = sum(model.losses)
     def loss(y_true, y_pred):
-        bce = binary_crossentropy(y_true, y_pred)
-        return bce + K.get_value(kl_alpha) * kl
+        bce = binary_crossentropy(y_true, y_pred) 
+        # kl = kl_divergence(y_true, y_pred)
+        return bce + K.get_value(kl_alpha) * kl_sum
 
     return loss
 

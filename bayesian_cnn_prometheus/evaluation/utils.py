@@ -1,9 +1,16 @@
 import json
 from pathlib import Path
+
 import nibabel as nib
 import numpy as np
 
 from bayesian_cnn_prometheus.constants import Paths
+
+
+def load_lungs_mask(path: str) -> np.ndarray:
+    image = load_nifti_file(path)
+    # image[image == 1] = 0  # to remove trachea
+    return image.astype(bool).astype('int16')
 
 
 def load_nifti_file(file_path: str) -> np.ndarray:
@@ -11,11 +18,22 @@ def load_nifti_file(file_path: str) -> np.ndarray:
     return nifti.get_fdata()
 
 
+# def standardize_image(array) -> np.ndarray:
+#     array = array - np.min(array)
+#     divider = np.max(array) if np.max(array) != 0 else 1
+#     array = array * 255 / divider
+#     return array.astype(np.int16)
+
+
 def standardize_image(array) -> np.ndarray:
-    array = array - np.min(array)
-    divider = np.max(array) if np.max(array) != 0 else 1
-    array = array * 255 / divider
-    return array.astype(np.int16)
+    mean_intensity = np.mean(array)
+    std_intensity = np.std(array)
+    percentile_99_5 = np.percentile(array, 99.5)
+    percentile_00_5 = np.percentile(array, 00.5)
+
+    normalized_image = np.clip(array, percentile_00_5, percentile_99_5)
+    normalized_image = (normalized_image - mean_intensity) / std_intensity
+    return normalized_image
 
 
 def get_standardized_slice(array: np.ndarray, slice_number: int) -> np.ndarray:
@@ -38,8 +56,8 @@ def get_patient_index(mask_path: str) -> str:
     return mask_path.split('.')[0].split('_')[-1]
 
 
-def load_config():
-    with open(Paths.CONFIG_PATH) as cf:
+def load_config(path: Path = Paths.CONFIG_PATH):
+    with open(path) as cf:
         config = json.load(cf)
     return config
 

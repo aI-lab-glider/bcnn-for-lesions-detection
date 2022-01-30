@@ -1,0 +1,1 @@
+ln -s /net/pr1/plgrid/plggonwelo/Lung/LIDC data
