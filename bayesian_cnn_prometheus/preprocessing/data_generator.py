@@ -1,7 +1,8 @@
 import functools
+import random
 from dataclasses import dataclass
 from itertools import product
-from typing import Dict, Generator, Tuple
+from typing import Dict, Generator, Tuple, List
 
 import numpy as np
 
@@ -60,9 +61,9 @@ class DataGenerator:
         print('Idxs for dataset type ', dataset_type, self.dataset_structure[dataset_type])
         for image_index in self.dataset_structure[dataset_type]:
             x_npy, y_npy = self.image_loader.load(image_index)
-            x_npy_norm = DataGenerator.normalize(
-                x_npy) if self.should_normalise else x_npy
+            x_npy_norm = DataGenerator.normalize(x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
+
             for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
                                         self._generate_chunks(y_npy, self.config.chunk_size, self.config.stride)):
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
@@ -72,6 +73,8 @@ class DataGenerator:
                 targets_chunks.append(y_chunk)
 
                 if len(images_chunks) == batch_size and len(targets_chunks) == batch_size:
+                    if self.config.should_shuffle:
+                        images_chunks, targets_chunks = self._shuffle_chunks(images_chunks, targets_chunks)
                     yield np.array(images_chunks), np.array(targets_chunks)
 
     def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int, int, int],
@@ -89,6 +92,15 @@ class DataGenerator:
             chunk = dataset[x:x + chunk_x, y:y + chunk_y, z:z + chunk_z]
             if chunk.shape == tuple(chunk_size):
                 yield chunk
+
+    @staticmethod
+    def _shuffle_chunks(images_chunks: List[np.ndarray], targets_chunks: List[np.ndarray]) -> (
+            List[np.ndarray], List[np.ndarray]):
+
+        chunks = list(zip(images_chunks, targets_chunks))
+        random.shuffle(chunks)
+        images_chunks, targets_chunks = zip(*chunks)
+        return list(images_chunks), list(targets_chunks)
 
     def _get_coords(self, dataset, chunk_size, stride):
         x_coords, y_coords, z_coords = [self._get_axis_coords_list(origin_shape, chunk_shape, stride)

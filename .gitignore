@@ -12,7 +12,6 @@ weights/
 */config.local.json
 .env
 weights_tf_1/
-preprocessing*
 venv*
 **/error_0.err
 **/output_0.out
