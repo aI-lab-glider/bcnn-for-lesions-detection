@@ -1,8 +1,9 @@
 import functools
+from optparse import Option
 import random
 from dataclasses import dataclass
 from itertools import product
-from typing import Dict, Generator, Tuple, List
+from typing import Callable, Dict, Generator, Iterable, Optional, Sequence, Tuple, List
 
 import numpy as np
 
@@ -10,7 +11,17 @@ from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
+# augmentations
+from batchgenerators.augmentations.color_augmentations import (augment_contrast,augment_brightness_additive, augment_brightness_multiplicative, augment_gamma)
 
+from batchgenerators.augmentations.noise_augmentations import (augment_rician_noise,\
+    augment_gaussian_noise)
+
+from batchgenerators.augmentations.resample_augmentations import augment_linear_downsampling_scipy
+
+
+
+Augmentation = Callable[[np.array], np.array]
 
 @dataclass
 class DataGeneratorConfig:
@@ -35,7 +46,20 @@ class DataGenerator:
 
         self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
                                           preprocessing_config['update_healthy_patients_indices'])
-        self.dataset_structure = None
+        self.dataset_structure: Optional[Dict[str, List[str]]] = None
+
+        self._augmentations = self._create_augmentations()
+
+    def _create_augmentations(self) -> Sequence[Augmentation]:
+        return [
+            augment_contrast,
+            augment_brightness_additive, 
+            augment_brightness_multiplicative, 
+            augment_gamma,
+            augment_rician_noise,
+            augment_gaussian_noise,
+            augment_linear_downsampling_scipy
+        ]
 
     def get_train(self):
         return self._get_data_generator(DatasetType.TRAIN, self.batch_size)
@@ -46,21 +70,19 @@ class DataGenerator:
     def get_valid(self):
         return self._get_data_generator(DatasetType.VALID, self.batch_size)
 
-    def _get_data_generator(self, dataset_type: DatasetType, batch_size: int):
+    def _get_data_generator(self, dataset_type: str, batch_size: int):
         if self.dataset_structure is None:
             self.dataset_structure = self.data_splitter.split_indices()
         return functools.partial(self._generate_data, dataset_type, batch_size)
 
-    def _generate_data(self, dataset_type: DatasetType, batch_size: int):
+    def _generate_data(self, dataset_type: str, batch_size: int):
         """
         Creates a generator that produces arrays with chunks ready for training.
         :param dataset_type: type of dataset (train, test, valid)
         :param batch_size: number of chunks in one batch
         :return: generator that produces array with chunks
         """
-        print('Idxs for dataset type ', dataset_type, self.dataset_structure[dataset_type])
-        for image_index in self.dataset_structure[dataset_type]:
-            x_npy, y_npy = self.image_loader.load(image_index)
+        for x_npy, y_npy in self._image_flow(dataset_type):
             x_npy_norm = DataGenerator.normalize(x_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
 
@@ -77,6 +99,17 @@ class DataGenerator:
                         images_chunks, targets_chunks = self._shuffle_chunks(images_chunks, targets_chunks)
                     yield np.array(images_chunks), np.array(targets_chunks)
 
+    def _image_flow(self, dataset_type: str):
+        assert self.dataset_structure is not None
+        for image_index in self.dataset_structure[dataset_type]:
+            x_npy, y_npy = self.image_loader.load(image_index)
+            yield x_npy, y_npy
+            augmentations = self._augmentations if not self.config.should_shuffle else random.sample(self._augmentations, len(self._augmentations))
+            for augmentation in augmentations:
+                x_npy_augmented, y_npy_augmented = augmentation(x_npy[None, ...]), augmentation(y_npy[None,...])
+                yield np.squeeze(x_npy_augmented, axis=0), np.squeeze(y_npy_augmented, axis=0)
+
+    
     def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int, int, int],
                          stride: Tuple[int, int, int]) -> Generator[np.ndarray, None, None]:
         """

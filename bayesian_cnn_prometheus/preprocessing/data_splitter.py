@@ -21,7 +21,7 @@ class DataSplitter:
         self.config = data_structure_config
         self.should_update_healthy_patience_indices = should_update_healthy_patience_indices
 
-    def split_indices(self) -> dict:
+    def split_indices(self) -> Dict[str, List[str]]:
         """
         Divides indices into train, valid and test part.
         :return: dict with dataset types and their indices
@@ -44,7 +44,6 @@ class DataSplitter:
 
         train_indices_len = patients_number - valid_indices_len - test_indices_len
 
-        print(train_indices_len)
         return {
             DatasetType.TRAIN: patients_indices_to_train[:train_indices_len],
             DatasetType.VALID: patients_indices_to_train[

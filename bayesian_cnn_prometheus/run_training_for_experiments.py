@@ -1,3 +1,4 @@
+from ast import parse
 import copy
 import json
 import operator
@@ -8,11 +9,12 @@ from itertools import product
 from os import mkdir
 from pathlib import Path
 from typing import Any, Iterable, List, Optional
+import argparse
 
 from bayesian_cnn_prometheus.constants import Paths
 
-EXPERIMENTS_DIR = 'health_patients_10'
-
+EXPERIMENTS_DIR = Path('experiments')
+EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
 
 @dataclass
 class Override:
@@ -35,6 +37,22 @@ class Override:
         key = self.alias or ".".join([segment[:3] for segment in self.key.split('.')])
         return f'{key}_{value}'
 
+
+
+def run_tests(combinations_to_test, is_local_execution):
+    for combination in combinations_to_test:
+        overrides = [
+            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] for
+            override in combination]
+        for override in product(*overrides):
+            experiment_dir = create_experiment_dir(override)
+            experiment_config = create_config(str(experiment_dir), override)
+            config_path = save_experiment_config(experiment_config, experiment_dir)
+            sbatch_script_path = create_sbatch_script(experiment_dir)
+
+            command = 'python' if is_local_execution else f'sbatch {sbatch_script_path}'
+            os.system(f'{command} {Paths.PROJECT_DIR / "main.py"} {config_path}')
+            print('Submitted ', experiment_dir)
 
 def create_config(weights_dir: str, overrides: Iterable[Override]):
     with open('bayesian_cnn_prometheus/config.local.json') as cfg:
@@ -62,18 +80,7 @@ def save_experiment_config(experiment_config, experiment_dir):
     return path_to_config
 
 
-def run_tests(combinations_to_test):
-    for combination in combinations_to_test:
-        overrides = [
-            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] for
-            override in combination]
-        for override in product(*overrides):
-            experiment_dir = create_experiment_dir(override)
-            experiment_config = create_config(str(experiment_dir), override)
-            config_path = save_experiment_config(experiment_config, experiment_dir)
-            sbatch_script_path = create_sbatch_script(experiment_dir)
-            os.system(f'sbatch {sbatch_script_path} {Paths.PROJECT_DIR / "main.py"} {config_path}')
-            print('Submitted ', experiment_dir)
+
 
 
 def create_sbatch_script(experiment_dir: Path):
@@ -90,6 +97,18 @@ def create_sbatch_script(experiment_dir: Path):
     return new_script_path
 
 
+
+@dataclass
+class Args:
+    is_local_execution: bool
+
+    @staticmethod
+    def parse():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-l', action='store_true', help='is training should be executed locally')
+        args = parser.parse_args()
+        return Args(args.l)
+
 if __name__ == '__main__':
     combinations_to_test = [
         [
@@ -103,4 +122,5 @@ if __name__ == '__main__':
             },
         ]
     ]
-    run_tests(combinations_to_test)
+    args = Args.parse()
+    run_tests(combinations_to_test, args.is_local_execution)
