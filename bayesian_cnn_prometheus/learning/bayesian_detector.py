@@ -62,7 +62,7 @@ class BayesianDetector:
         self._model.summary(line_length=127)
         self._model(tf.ones((self._batch_size, *input_shape)))
         # loss_function = variational_free_energy_loss(self._model, self._kl_alpha)
-        self._model.compile(loss='categorical_crossentropy', optimizer=Adam(), metrics=["accuracy"])
+        self._model.compile(loss='binary_crossentropy', optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
         self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)
@@ -90,7 +90,7 @@ class BayesianDetector:
     def save_training_history(self, history_file_name: str):
         plt.plot(self._history.history['loss'], label='Loss - training')
         plt.plot(self._history.history['val_loss'], label='Loss - validation')
-        plt.title('MAE for Chennai Reservoir Levels')
+        plt.title(history_file_name)
         plt.ylabel('loss value')
         plt.xlabel('no. epoch')
         plt.legend(loc="upper left")
