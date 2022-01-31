@@ -15,6 +15,7 @@ setup(
         'tqdm~=4.62.3',
         'scikit-image==0.17.2',
         'scipy==1.5.4',
-        'glob2==0.7'
+        'glob2==0.7',
+	'batchgenerators'
     ],
 )
