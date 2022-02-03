@@ -11,7 +11,6 @@ from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
-# augmentations
 from batchgenerators.augmentations.color_augmentations import (augment_contrast, augment_brightness_multiplicative, augment_gamma)
 
 from batchgenerators.augmentations.noise_augmentations import (augment_rician_noise,\
