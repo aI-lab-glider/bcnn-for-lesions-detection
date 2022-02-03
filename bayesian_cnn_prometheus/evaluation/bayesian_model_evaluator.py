@@ -6,7 +6,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_lungs_mask, load_nifti_file, save_as_nifti, standardize_image
+from bayesian_cnn_prometheus.evaluation.utils import get_lungs_bounding_box_coords, load_lungs_mask, load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
 
 Window = Tuple[int, int, int]
@@ -61,16 +61,10 @@ class BayesianModelEvaluator:
 
     def crop_image_to_bounding_box_with_lungs(self, image, lungs_segmentation_path: str):
         lungs_mask = load_lungs_mask(lungs_segmentation_path)
-        lungs_bounding_box_coords = self.get_bounding_box_mask(lungs_mask)
+        lungs_bounding_box_coords = get_lungs_bounding_box_coords(lungs_mask)
         return image[lungs_bounding_box_coords]
 
-    def get_bounding_box_mask(self, mask: np.ndarray):
-        idxs = np.nonzero(mask)
-        starts = [min(idxs[i]) for i in range(mask.ndim)]
-        ends = [max(idxs[i]) for i in range(mask.ndim)]
-        return tuple(slice(s, e) for s, e in zip(starts, ends))
-
-    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
+    def _create_chunks(self, array: np.ndarray, stride: Stride) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)

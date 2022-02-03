@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Tuple
 
 import nibabel as nib
 import numpy as np
@@ -7,22 +8,23 @@ import numpy as np
 from bayesian_cnn_prometheus.constants import Paths
 
 
+def get_lungs_bounding_box_coords(mask: np.ndarray) -> Tuple[slice, slice, slice]:
+    """
+    :mask: 3D array with lungs segmentation
+    """
+    idxs = np.nonzero(mask)
+    starts = [min(idxs[i]) for i in range(mask.ndim)]
+    ends = [max(idxs[i]) for i in range(mask.ndim)]
+    return tuple(slice(s, e) for s, e in zip(starts, ends))
+
 def load_lungs_mask(path: str) -> np.ndarray:
     image = load_nifti_file(path)
-    # image[image == 1] = 0  # to remove trachea
     return image.astype(bool).astype('int16')
 
 
 def load_nifti_file(file_path: str) -> np.ndarray:
     nifti = nib.load(file_path)
     return nifti.get_fdata()
-
-
-# def standardize_image(array) -> np.ndarray:
-#     array = array - np.min(array)
-#     divider = np.max(array) if np.max(array) != 0 else 1
-#     array = array * 255 / divider
-#     return array.astype(np.int16)
 
 
 def standardize_image(array) -> np.ndarray:

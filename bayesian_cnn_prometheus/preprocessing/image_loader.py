@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Tuple
-from bayesian_cnn_prometheus.evaluation.utils import load_lungs_mask, standardize_image
+from bayesian_cnn_prometheus.evaluation.utils import get_lungs_bounding_box_coords, load_lungs_mask, standardize_image
 
 import nibabel as nib
 import numpy as np
@@ -22,7 +22,9 @@ class ImageLoader:
         image_file_path, target_file_path = self._get_files_names(
             image_index, 'nii.gz')
         image = self._load_image(image_file_path)
-        return image, load_lungs_mask(str(target_file_path))
+        mask = load_lungs_mask(str(target_file_path))
+        lungs_bounding_box = get_lungs_bounding_box_coords(mask)
+        return image[lungs_bounding_box], mask[lungs_bounding_box] 
 
     def _load_image(self, path):
         if self.extension == 'nii.gz':
