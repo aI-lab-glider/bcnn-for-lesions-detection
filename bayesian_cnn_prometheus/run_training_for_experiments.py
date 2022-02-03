@@ -13,7 +13,7 @@ import argparse
 
 from bayesian_cnn_prometheus.constants import Paths
 
-EXPERIMENTS_DIR = Path('experiments')/'train_only_on_bbox'
+EXPERIMENTS_DIR = Path('experiments')/'with_augmentation'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
 
 @dataclass

@@ -52,7 +52,7 @@ class DataGenerator:
 
     def _create_augmentations(self) -> Sequence[AugmentationFunction]:
         def wrap_augmentation(augmentation_function: AugmentationFunction) -> AugmentationFunction:
-            return lambda data: augmentation_function(data.astype('float64')).astype('int16')
+            return lambda data: np.squeeze(augmentation_function(data.astype('float64')[None, ...]).astype('int16'), axis=0)
         return list(map(wrap_augmentation , [
             augment_contrast,
             augment_brightness_multiplicative,
@@ -105,10 +105,15 @@ class DataGenerator:
         for image_index in self.dataset_structure[dataset_type]:
             x_npy, y_npy = self.image_loader.load(image_index)
             yield x_npy, y_npy
-            augmentations = self._augmentations if not self.config.should_shuffle else random.sample(self._augmentations, len(self._augmentations))
-            for augmentation in augmentations:
-                x_npy_augmented, y_npy_augmented = augmentation(x_npy[None, ...]), augmentation(y_npy[None,...])
-                yield np.squeeze(x_npy_augmented, axis=0), np.squeeze(y_npy_augmented, axis=0)
+        
+        augmentations = self._augmentations if not self.config.should_shuffle else random.sample(self._augmentations, len(self._augmentations))
+        if not augmentations:
+            yield None
+        for image_index in self.dataset_structure[dataset_type]:
+            augmentation = random.choice(augmentations)
+            x_npy, y_npy = self.image_loader.load(image_index)
+            x_npy_augmented, y_npy_augmented = augmentation(x_npy), augmentation(y_npy)
+            yield x_npy_augmented, y_npy_augmented
 
     
     def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int, int, int],
