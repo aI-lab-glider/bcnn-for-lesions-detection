@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Tuple
 
 import nibabel as nib
-
+import random
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
 from bayesian_cnn_prometheus.evaluation.utils import load_config, save_as_nifti
@@ -28,7 +28,7 @@ def get_patients_to_predict():
                          171, 173, 175, 177, 178, 179, 180, 181, 182, 183, 184, 186, 188, 189, 190, 191, 192, 195, 199,
                          202, 204, 205, 206, 207, 209, 211, 212, 213, 215, 216, 218,
                          219, 223, 224, 225, 230, 231, 232, 233, 235, 236, 237, 239]
-    return [3]  # random.sample(idxs_with_lesions, k=3)
+    return random.sample(idxs_with_lesions, k=3)
 
 
 def main():

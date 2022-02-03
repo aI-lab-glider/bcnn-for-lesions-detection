@@ -12,7 +12,7 @@ from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
 # augmentations
-from batchgenerators.augmentations.color_augmentations import (augment_contrast,augment_brightness_additive, augment_brightness_multiplicative, augment_gamma)
+from batchgenerators.augmentations.color_augmentations import (augment_contrast, augment_brightness_multiplicative, augment_gamma)
 
 from batchgenerators.augmentations.noise_augmentations import (augment_rician_noise,\
     augment_gaussian_noise)
@@ -21,13 +21,14 @@ from batchgenerators.augmentations.resample_augmentations import augment_linear_
 
 
 
-Augmentation = Callable[[np.array], np.array]
+AugmentationFunction = Callable[[np.array], np.array]
 
 @dataclass
 class DataGeneratorConfig:
     stride: Tuple[int, int, int]
     chunk_size: Tuple[int, int, int]
     should_shuffle: bool
+    should_augment: bool = True
 
 
 class DataGenerator:
@@ -41,25 +42,26 @@ class DataGenerator:
         self.image_loader = ImageLoader(
             preprocessing_config['transform_nifti_to_npy']['ext'])
 
-        self.config = DataGeneratorConfig(
+        self.config = config = DataGeneratorConfig(
             **preprocessing_config['create_chunks'])
 
         self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
                                           preprocessing_config['update_healthy_patients_indices'])
         self.dataset_structure: Optional[Dict[str, List[str]]] = None
 
-        self._augmentations = self._create_augmentations()
+        self._augmentations = self._create_augmentations() if config.should_augment else []
 
-    def _create_augmentations(self) -> Sequence[Augmentation]:
-        return [
+    def _create_augmentations(self) -> Sequence[AugmentationFunction]:
+        def wrap_augmentation(augmentation_function: AugmentationFunction) -> AugmentationFunction:
+            return lambda data: augmentation_function(data.astype('float64')).astype('int16')
+        return list(map(wrap_augmentation , [
             augment_contrast,
-            augment_brightness_additive, 
-            augment_brightness_multiplicative, 
+            augment_brightness_multiplicative,
             augment_gamma,
             augment_rician_noise,
             augment_gaussian_noise,
-            augment_linear_downsampling_scipy
-        ]
+            augment_linear_downsampling_scipy,
+        ]))
 
     def get_train(self):
         return self._get_data_generator(DatasetType.TRAIN, self.batch_size)

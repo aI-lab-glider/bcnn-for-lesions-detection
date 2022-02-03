@@ -5,13 +5,12 @@ from bayesian_cnn_prometheus.evaluation.utils import load_config
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
-
 def run_training(config):
-    preprocessing_config = config.get('preprocessing')
-    batch_size = config.get('batch_size')
-    chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
+    preprocessing_config = config['preprocessing']
+    batch_size = config['batch_size']
+    chunk_size = preprocessing_config['create_chunks']['chunk_size']
 
-    data_loader = DataLoader(config.get('preprocessing'), batch_size, chunk_size)
+    data_loader = DataLoader(config['preprocessing'], batch_size, chunk_size)
     data_loader.load_data()
 
     training_dataset = data_loader.get_train_data()
