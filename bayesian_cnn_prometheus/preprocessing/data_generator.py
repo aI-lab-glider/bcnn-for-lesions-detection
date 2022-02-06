@@ -11,16 +11,17 @@ from bayesian_cnn_prometheus.constants import DatasetType
 from bayesian_cnn_prometheus.evaluation.utils import standardize_image
 from bayesian_cnn_prometheus.preprocessing.data_splitter import DataSplitter
 from bayesian_cnn_prometheus.preprocessing.image_loader import ImageLoader
-from batchgenerators.augmentations.color_augmentations import (augment_contrast, augment_brightness_multiplicative, augment_gamma)
+from batchgenerators.augmentations.color_augmentations import (
+    augment_contrast, augment_brightness_multiplicative, augment_gamma)
 
-from batchgenerators.augmentations.noise_augmentations import (augment_rician_noise,\
-    augment_gaussian_noise)
+from batchgenerators.augmentations.noise_augmentations import (augment_rician_noise,
+                                                               augment_gaussian_noise)
 
 from batchgenerators.augmentations.resample_augmentations import augment_linear_downsampling_scipy
 
 
-
 AugmentationFunction = Callable[[np.array], np.array]
+
 
 @dataclass
 class DataGeneratorConfig:
@@ -46,14 +47,16 @@ class DataGenerator:
 
         self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
                                           preprocessing_config['update_healthy_patients_indices'])
-        self.dataset_structure: Optional[Dict[str, List[str]]] = None
+        self.dataset_structure = self.data_splitter.split_indices()
 
         self._augmentations = self._create_augmentations() if config.should_augment else []
 
     def _create_augmentations(self) -> Sequence[AugmentationFunction]:
         def wrap_augmentation(augmentation_function: AugmentationFunction) -> AugmentationFunction:
-            return lambda data: np.squeeze(augmentation_function(data.astype('float64')[None, ...]).astype('int16'), axis=0)
-        return list(map(wrap_augmentation , [
+            return lambda data: np.squeeze(
+                augmentation_function(data.astype('float64')[None, ...]).astype('int16'),
+                axis=0)
+        return list(map(wrap_augmentation, [
             augment_contrast,
             augment_brightness_multiplicative,
             augment_gamma,
@@ -72,8 +75,6 @@ class DataGenerator:
         return self._get_data_generator(DatasetType.VALID, self.batch_size)
 
     def _get_data_generator(self, dataset_type: str, batch_size: int):
-        if self.dataset_structure is None:
-            self.dataset_structure = self.data_splitter.split_indices()
         return functools.partial(self._generate_data, dataset_type, batch_size)
 
     def _generate_data(self, dataset_type: str, batch_size: int):
@@ -101,12 +102,12 @@ class DataGenerator:
                     yield np.array(images_chunks), np.array(targets_chunks)
 
     def _image_flow(self, dataset_type: str):
-        assert self.dataset_structure is not None
         for image_index in self.dataset_structure[dataset_type]:
             x_npy, y_npy = self.image_loader.load(image_index)
             yield x_npy, y_npy
-        
-        augmentations = self._augmentations if not self.config.should_shuffle else random.sample(self._augmentations, len(self._augmentations))
+
+        augmentations = self._augmentations if not self.config.should_shuffle else random.sample(
+            self._augmentations, len(self._augmentations))
         if not augmentations:
             yield None
         for image_index in self.dataset_structure[dataset_type]:
@@ -115,7 +116,6 @@ class DataGenerator:
             x_npy_augmented, y_npy_augmented = augmentation(x_npy), augmentation(y_npy)
             yield x_npy_augmented, y_npy_augmented
 
-    
     def _generate_chunks(self, dataset: np.ndarray, chunk_size: Tuple[int, int, int],
                          stride: Tuple[int, int, int]) -> Generator[np.ndarray, None, None]:
         """
