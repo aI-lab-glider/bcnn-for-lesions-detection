@@ -1,15 +1,16 @@
+import datetime
 import math
+import os.path
 from pathlib import Path
 from typing import Callable, Tuple, Dict
 
 import tensorflow as tf
 import tensorflow.keras.backend as K
-from matplotlib import pyplot as plt
-from tensorflow.keras.callbacks import Callback, History, LearningRateScheduler, ModelCheckpoint
+from tensorflow.keras.callbacks import Callback, LearningRateScheduler, ModelCheckpoint, TensorBoard
 from tensorflow.keras.optimizers import Adam
 
 from .model.bayesian_vnet import BayesianVnet
-from .model.utils import AnnealingCallback, variational_free_energy_loss
+from .model.utils import AnnealingCallback
 
 
 class BayesianDetector:
@@ -41,6 +42,7 @@ class BayesianDetector:
         self._checkpointer: ModelCheckpoint = None
         self._scheduler: LearningRateScheduler = None
         self._annealer: Callback = None
+        self._tensorboard_callback: TensorBoard = None
         self._kl_start_epoch: int = config.get('kl_start_epoch')
         self._kl_alpha_increase_per_epoch: float = config.get('kl_alpha_increase_per_epoch')
 
@@ -54,23 +56,25 @@ class BayesianDetector:
         self._initialize_model(input_shape)
         self._initialize_callbacks()
 
-        self._history: History = None
-
     def _initialize_model(self, input_shape: Tuple[int, ...]):
         self._model = BayesianVnet(input_shape, kernel_size=self._kernel_size, activation=self._activation,
                                    padding=self._padding, prior_std=self._prior_std)
         self._model.summary(line_length=127)
         self._model(tf.ones((self._batch_size, *input_shape)))
-        # loss_function = variational_free_energy_loss(self._model, self._kl_alpha)
         self._model.compile(loss='binary_crossentropy', optimizer=Adam(), metrics=["accuracy"])
 
     def _initialize_callbacks(self):
-        self._checkpoint_path = BayesianDetector._get_paths('bayesian', self._weights_dir)
+        self._checkpoint_path = self._get_paths('bayesian')
         self._checkpointer = ModelCheckpoint(str(self._checkpoint_path), verbose=1, save_weights_only=True,
                                              save_best_only=True, )
+
         self._scheduler = LearningRateScheduler(BayesianDetector._get_scheduler(self._lr_decay_start_epoch))
+
         self._annealer = Callback() if self._kl_alpha is None else \
             AnnealingCallback(self._kl_alpha, self._kl_start_epoch, self._kl_alpha_increase_per_epoch)
+
+        self._tensorboard_path = self._get_tensorboard_path()
+        self._tensorboard_callback = TensorBoard(log_dir=self._tensorboard_path, histogram_freq=1)
 
     def _adjust_kl_alpha(self, kl_alpha: int):
         if kl_alpha is None:
@@ -82,25 +86,20 @@ class BayesianDetector:
         return K.variable(kl_alpha)
 
     def fit(self, training_dataset, validation_dataset):
-        self._history = self._model.fit(x=training_dataset, epochs=self._epochs, initial_epoch=self._initial_epoch,
-                                        callbacks=[self._checkpointer, self._scheduler, self._annealer],
-                                        validation_data=validation_dataset.repeat(),
-                                        validation_steps=self._validation_steps)
+        self._model.fit(x=training_dataset, epochs=self._epochs, initial_epoch=self._initial_epoch,
+                        callbacks=[self._checkpointer, self._scheduler, self._annealer, self._tensorboard_callback],
+                        validation_data=validation_dataset.repeat(),
+                        validation_steps=self._validation_steps)
 
-    def save_training_history(self, history_file_name: str):
-        plt.plot(self._history.history['loss'], label='Loss - training')
-        plt.plot(self._history.history['val_loss'], label='Loss - validation')
-        plt.title(history_file_name)
-        plt.ylabel('loss value')
-        plt.xlabel('no. epoch')
-        plt.legend(loc="upper left")
-        plt.savefig(history_file_name)
-
-    @staticmethod
-    def _get_paths(network_type: str, weights_dir: Path):
-        Path(weights_dir).mkdir(parents=True, exist_ok=True)
-        checkpoint_path = Path(weights_dir) / (network_type + "-{epoch:02d}-{val_accuracy:.3f}-{val_loss:.0f}.h5")
+    def _get_paths(self, network_type: str):
+        Path(self._weights_dir).mkdir(parents=True, exist_ok=True)
+        checkpoint_path = Path(self._weights_dir) / (network_type + '-{epoch:02d}-{val_accuracy:.3f}-{val_loss:.0f}.h5')
         return checkpoint_path
+
+    def _get_tensorboard_path(self):
+        tensorboard_path = os.path.join(self._weights_dir, 'logs', 'fit',
+                                        datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
+        return tensorboard_path
 
     @staticmethod
     def _get_scheduler(lr_decay_start_epoch: int) -> Callable[[int, float], float]:

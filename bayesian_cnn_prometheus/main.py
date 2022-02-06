@@ -5,6 +5,7 @@ from bayesian_cnn_prometheus.evaluation.utils import load_config
 from bayesian_cnn_prometheus.learning.bayesian_detector import BayesianDetector
 from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
+
 def run_training(config):
     preprocessing_config = config['preprocessing']
     batch_size = config['batch_size']
@@ -18,7 +19,6 @@ def run_training(config):
 
     detector = BayesianDetector(config, batch_size, BayesianDetector.get_input_shape(training_dataset))
     detector.fit(training_dataset, validation_dataset)
-    detector.save_training_history('history.png')
 
 
 def main():
