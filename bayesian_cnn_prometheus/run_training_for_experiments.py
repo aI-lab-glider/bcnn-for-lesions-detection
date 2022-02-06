@@ -12,9 +12,53 @@ from typing import Any, Iterable, List, Optional
 import argparse
 
 from bayesian_cnn_prometheus.constants import Paths
+from itertools import chain
 
-EXPERIMENTS_DIR = Path('experiments')/'with_augmentation'
+EXPERIMENTS_DIR = Path('experiments')/'control_group'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
+
+
+
+@dataclass
+class ExperimentSetup:
+    name: str
+    overrides: Iterable['Override']
+
+    @staticmethod
+    def from_accumulated_dict(accumulated_config) -> Iterable['ExperimentSetup']:
+        """
+        Accumulated config is the config, that can have more than possible value for override
+        {
+            'name': ExpName,
+            'overrides': [
+            {
+                'alias': 'Alias',
+                'key': 'Key',
+                'values': [val1, val2]
+            },
+            {
+                'alias': 'Alias2',
+                'key': 'Key',
+                'values': [val1, val2]
+            }],
+            }
+        }
+        
+        """
+        overrides_for_keys = [
+            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] 
+            for override in accumulated_config['overrides']
+            ]
+        
+        return [ExperimentSetup(name=f'{accumulated_config["name"]}', overrides=overrides).with_verbose_name() for overrides in product(*overrides_for_keys)]
+
+    def with_verbose_name(self) -> 'ExperimentSetup':
+        overrides_key = "_".join([str(o) for o in self.overrides])
+        name = f'{self.name}_{overrides_key}'
+        return ExperimentSetup(name=name, overrides=self.overrides)
+
+
+    
 
 @dataclass
 class Override:
@@ -39,20 +83,15 @@ class Override:
 
 
 
-def run_tests(combinations_to_test, is_local_execution):
-    for combination in combinations_to_test:
-        overrides = [
-            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] for
-            override in combination]
-        for override in product(*overrides):
-            experiment_dir = create_experiment_dir(override)
-            experiment_config = create_config(str(experiment_dir), override)
-            config_path = save_experiment_config(experiment_config, experiment_dir)
-            sbatch_script_path = create_sbatch_script(experiment_dir)
-
-            command = 'python' if is_local_execution else f'sbatch {sbatch_script_path}'
-            os.system(f'{command} {Paths.PROJECT_DIR / "main.py"} {config_path}')
-            print('Submitted ', experiment_dir)
+def run_tests(experiments: Iterable[ExperimentSetup], is_local_execution):
+    for experiment in experiments:
+        experiment_dir = create_experiment_dir(experiment)
+        experiment_config = create_config(str(experiment_dir), experiment.overrides)
+        config_path = save_experiment_config(experiment_config, experiment_dir)
+        sbatch_script_path = create_sbatch_script(experiment_dir)
+        command = 'python' if is_local_execution else f'sbatch {sbatch_script_path}'
+        os.system(f'{command} {Paths.PROJECT_DIR / "main.py"} {config_path}')
+        print('Submitted ', experiment_dir)
 
 def create_config(weights_dir: str, overrides: Iterable[Override]):
     with open('bayesian_cnn_prometheus/config.local.json') as cfg:
@@ -63,10 +102,8 @@ def create_config(weights_dir: str, overrides: Iterable[Override]):
     return config
 
 
-def create_experiment_dir(override: Iterable[Override]):
-    experiment_name = "_".join(str(item) for item in override)
-    if not os.path.isdir(experiment_name):
-        os.mkdir(experiment_name)
+def create_experiment_dir(experiment: ExperimentSetup):
+    experiment_name = experiment.name
     experiment_dir = Path(EXPERIMENTS_DIR) / experiment_name
     if not experiment_dir.exists():
         experiment_dir.mkdir(parents=True)
@@ -110,17 +147,49 @@ class Args:
         return Args(args.l)
 
 if __name__ == '__main__':
-    combinations_to_test = [
-        [
+    stride_exp = {
+        'name': 'stride_change', # Assumption: smaller stride will improve model quality because model will see more data,
+        #  and more importantly it will see siimilar data in different contexts
+        'overrides': [
             {
-                'alias': 'stride',
+                'alias': 's',
                 'key': 'preprocessing.create_chunks.stride',
                 'values': [
-                    [64, 64, 32]
-
+                    [64, 8, 8],
+                    [64, 16, 16], 
+                    [128, 16, 16], 
+                    [128, 32, 32]
                 ]
             },
-        ]
-    ]
+            {
+                'alias': 'cs',
+                'key': 'preprocessing.create_chunks.chunk_size',
+                'values': [[128, 16, 16]]
+            }
+        ],
+    }
+
+    chunk_exp = {
+        'name': 'chunk_change', # Assumption: bigger window will see more context and be able to get more precise results
+        'overrides': [
+            {
+                'alias': 's',
+                'key': 'preprocessing.create_chunks.chunk_size',
+                'values': [
+                    [4, 256, 4],
+                    [8, 256, 8], 
+                    [32, 64, 32], 
+                    [8, 128, 32]
+                ]
+            },
+            {
+                'alias': 'cs',
+                'key': 'preprocessing.create_chunks.stride',
+                'values': [[16, 64, 16]]
+            }
+        ],
+    }
+    experiments = [chunk_exp]
     args = Args.parse()
-    run_tests(combinations_to_test, args.is_local_execution)
+    experiments = list(chain(*[ExperimentSetup.from_accumulated_dict(e) for e in experiments]))
+    run_tests(experiments, args.is_local_execution)
