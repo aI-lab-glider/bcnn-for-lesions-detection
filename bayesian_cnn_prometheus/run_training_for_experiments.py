@@ -1,4 +1,4 @@
-from ast import parse
+import argparse
 import copy
 import json
 import operator
@@ -6,13 +6,12 @@ import os
 from dataclasses import dataclass
 from functools import reduce
 from itertools import product
-from os import mkdir
 from pathlib import Path
-from typing import Any, Iterable, List, Optional
-import argparse
+from typing import Any, Iterable, Optional
 
 from bayesian_cnn_prometheus.constants import Paths
 from itertools import chain
+
 
 EXPERIMENTS_DIR = Path('experiments')/'control_group'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
@@ -83,6 +82,7 @@ class Override:
 
 
 
+
 def run_tests(experiments: Iterable[ExperimentSetup], is_local_execution):
     for experiment in experiments:
         experiment_dir = create_experiment_dir(experiment)
@@ -92,6 +92,8 @@ def run_tests(experiments: Iterable[ExperimentSetup], is_local_execution):
         command = 'python' if is_local_execution else f'sbatch {sbatch_script_path}'
         os.system(f'{command} {Paths.PROJECT_DIR / "main.py"} {config_path}')
         print('Submitted ', experiment_dir)
+
+
 
 def create_config(weights_dir: str, overrides: Iterable[Override]):
     with open('bayesian_cnn_prometheus/config.local.json') as cfg:
@@ -117,9 +119,6 @@ def save_experiment_config(experiment_config, experiment_dir):
     return path_to_config
 
 
-
-
-
 def create_sbatch_script(experiment_dir: Path):
     script_name = 'run_python_script'
     with open(f"{script_name}_TEMPLATE.sh", "r", encoding="utf-8") as f:
@@ -134,7 +133,6 @@ def create_sbatch_script(experiment_dir: Path):
     return new_script_path
 
 
-
 @dataclass
 class Args:
     is_local_execution: bool
@@ -145,6 +143,7 @@ class Args:
         parser.add_argument('-l', action='store_true', help='is training should be executed locally')
         args = parser.parse_args()
         return Args(args.l)
+
 
 if __name__ == '__main__':
     stride_exp = {
