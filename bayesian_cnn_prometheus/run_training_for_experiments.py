@@ -1,4 +1,4 @@
-from ast import parse
+import argparse
 import copy
 import json
 import operator
@@ -6,15 +6,14 @@ import os
 from dataclasses import dataclass
 from functools import reduce
 from itertools import product
-from os import mkdir
 from pathlib import Path
-from typing import Any, Iterable, List, Optional
-import argparse
+from typing import Any, Iterable, Optional
 
 from bayesian_cnn_prometheus.constants import Paths
 
-EXPERIMENTS_DIR = Path('experiments')/'with_augmentation'
+EXPERIMENTS_DIR = Path('experiments') / 'with_augmentation'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
+
 
 @dataclass
 class Override:
@@ -38,7 +37,6 @@ class Override:
         return f'{key}_{value}'
 
 
-
 def run_tests(combinations_to_test, is_local_execution):
     for combination in combinations_to_test:
         overrides = [
@@ -54,6 +52,7 @@ def run_tests(combinations_to_test, is_local_execution):
             os.system(f'{command} {Paths.PROJECT_DIR / "main.py"} {config_path}')
             print('Submitted ', experiment_dir)
 
+
 def create_config(weights_dir: str, overrides: Iterable[Override]):
     with open('bayesian_cnn_prometheus/config.local.json') as cfg:
         config = json.load(cfg)
@@ -65,8 +64,6 @@ def create_config(weights_dir: str, overrides: Iterable[Override]):
 
 def create_experiment_dir(override: Iterable[Override]):
     experiment_name = "_".join(str(item) for item in override)
-    if not os.path.isdir(experiment_name):
-        os.mkdir(experiment_name)
     experiment_dir = Path(EXPERIMENTS_DIR) / experiment_name
     if not experiment_dir.exists():
         experiment_dir.mkdir(parents=True)
@@ -78,9 +75,6 @@ def save_experiment_config(experiment_config, experiment_dir):
     with open(path_to_config, 'w+') as config_file:
         json.dump(experiment_config, config_file)
     return path_to_config
-
-
-
 
 
 def create_sbatch_script(experiment_dir: Path):
@@ -97,7 +91,6 @@ def create_sbatch_script(experiment_dir: Path):
     return new_script_path
 
 
-
 @dataclass
 class Args:
     is_local_execution: bool
@@ -108,6 +101,7 @@ class Args:
         parser.add_argument('-l', action='store_true', help='is training should be executed locally')
         args = parser.parse_args()
         return Args(args.l)
+
 
 if __name__ == '__main__':
     combinations_to_test = [
