@@ -13,13 +13,13 @@
 #SBATCH --mem-per-cpu=15GB
 
 ## Maksymalny czas trwania zlecenia (format HH:MM:SS)
-#SBATCH --time=70:00:00
+#SBATCH --time=12:00:00
 
 ## Nazwa grantu do rozliczenia zużycia zasobów
 #SBATCH -A plgonwelo
 
 ## Specyfikacja partycji
-#SBATCH -p plgrid-gpu
+#SBATCH -p plgrid-gpu-v100
 #SBATCH --gres=gpu
 
 ## Plik ze standardowym wyjściem

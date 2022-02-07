@@ -7,11 +7,11 @@ from bayesian_cnn_prometheus.preprocessing.data_loader import DataLoader
 
 
 def run_training(config):
-    preprocessing_config = config.get('preprocessing')
-    batch_size = config.get('batch_size')
-    chunk_size = preprocessing_config.get('create_chunks').get('chunk_size')
+    preprocessing_config = config['preprocessing']
+    batch_size = config['batch_size']
+    chunk_size = preprocessing_config['create_chunks']['chunk_size']
 
-    data_loader = DataLoader(config.get('preprocessing'), batch_size, chunk_size)
+    data_loader = DataLoader(config['preprocessing'], batch_size, chunk_size)
     data_loader.load_data()
 
     training_dataset = data_loader.get_train_data()
@@ -19,7 +19,6 @@ def run_training(config):
 
     detector = BayesianDetector(config, batch_size, BayesianDetector.get_input_shape(training_dataset))
     detector.fit(training_dataset, validation_dataset)
-    detector.save_training_history('history.png')
 
 
 def main():

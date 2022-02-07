@@ -6,7 +6,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import load_lungs_mask, load_nifti_file, save_as_nifti, standardize_image
+from bayesian_cnn_prometheus.evaluation.utils import get_lungs_bounding_box_coords, load_lungs_mask, load_nifti_file, save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
 
 Window = Tuple[int, int, int]
@@ -23,8 +23,7 @@ class BayesianModelEvaluator:
         self.chunk_size = chunk_size
         self.weights_path = weights_path
 
-    def evaluate(self, image_path: str, segmentation_path: str, samples_num: int, stride: Stride) -> Tuple[
-        np.ndarray, List[np.ndarray]]:
+    def evaluate(self, image: np.ndarray, samples_num: int, stride: Stride) -> List[np.ndarray]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image_path: path to the image to predict
@@ -33,9 +32,7 @@ class BayesianModelEvaluator:
         :param stride: three-elements list with steps value to make in each axis
         :return: list of arrays with samples_num predictions on image
         """
-        image = load_nifti_file(image_path)
         image = standardize_image(image)
-        image = self.crop_image_to_bounding_box_with_lungs(image, segmentation_path)
         image_chunks, coords = self._create_chunks(image, stride)
 
         model = self.load_saved_model(self.weights_path, self.chunk_size)
@@ -57,20 +54,9 @@ class BayesianModelEvaluator:
                     coord)] += np.ones(chunk.shape)
             predictions.append(prediction / np.maximum(count_prediction, 1))
 
-        return image, predictions
+        return predictions
 
-    def crop_image_to_bounding_box_with_lungs(self, image, lungs_segmentation_path: str):
-        lungs_mask = load_lungs_mask(lungs_segmentation_path)
-        lungs_bounding_box_coords = self.get_bounding_box_mask(lungs_mask)
-        return image[lungs_bounding_box_coords]
-
-    def get_bounding_box_mask(self, mask: np.ndarray):
-        idxs = np.nonzero(mask)
-        starts = [min(idxs[i]) for i in range(mask.ndim)]
-        ends = [max(idxs[i]) for i in range(mask.ndim)]
-        return tuple(slice(s, e) for s, e in zip(starts, ends))
-
-    def _create_chunks(self, array: np.ndarray, stride: List[int]) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
+    def _create_chunks(self, array: np.ndarray, stride: Stride) -> Tuple[List[np.ndarray], List[Tuple[int, int, int]]]:
         """
         Generates chunks from the original data (numpy array).
         :param array: 3d array (image or reference or mask)

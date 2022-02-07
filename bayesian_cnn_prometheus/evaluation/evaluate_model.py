@@ -6,10 +6,10 @@ from pathlib import Path
 from typing import Tuple
 
 import nibabel as nib
-
+import random
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
-from bayesian_cnn_prometheus.evaluation.utils import load_config, save_as_nifti
+from bayesian_cnn_prometheus.evaluation.utils import get_lungs_bounding_box_coords, load_config, load_lungs_mask, load_nifti_file, save_as_nifti
 
 
 @dataclass
@@ -59,6 +59,12 @@ def create_predictions_dir(weights_path: Path):
     return prediction_path
 
 
+def crop_image_to_bounding_box_with_lungs(image, lungs_segmentation_path: str):
+    lungs_mask = load_lungs_mask(lungs_segmentation_path)
+    lungs_bounding_box_coords = get_lungs_bounding_box_coords(lungs_mask)
+    return image[lungs_bounding_box_coords]
+
+
 @dataclass
 class PredictionOptions:
     chunk_size: Tuple[int, int, int]
@@ -72,26 +78,32 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
     segmentation_path = str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_PATH).format(
         f'{patient_idx:0>4}', 'nii.gz')
 
-    image = nib.load(image_path)
+    mask_path = str(Paths.MASK_FILE_PATTERN_PATH).format(f'{patient_idx:0>4}', 'nii.gz')
+
+    nifti = nib.load(image_path)
+    image = load_nifti_file(image_path)
+    image = crop_image_to_bounding_box_with_lungs(image, segmentation_path)
+
     model_evaluator = BayesianModelEvaluator(
         str(weights_path),
         prediction_options.chunk_size
     )
 
-    bb_box, predictions = model_evaluator.evaluate(
-        image_path,
-        segmentation_path,
+    predictions = model_evaluator.evaluate(
+        image,
         prediction_options.mc_sample,
         prediction_options.stride)
 
-    save_as_nifti(bb_box, results_dir / f'LUNGS_BOUNDING_BOX_{patient_idx}', image.affine, image.header)
-
+    mask = load_lungs_mask(mask_path)
+    mask = crop_image_to_bounding_box_with_lungs(mask, segmentation_path)
+    save_as_nifti(image, results_dir / f'LUNGS_BOUNDING_BOX_{patient_idx}', nifti.affine, nifti.header)
+    save_as_nifti(mask, results_dir / f'LESION_{patient_idx}', nifti.affine, nifti.header)
     model_evaluator.save_predictions(
         results_dir,
         patient_idx,
         predictions,
-        image.affine,
-        image.header,
+        nifti.affine,
+        nifti.header,
         False)
 
 
