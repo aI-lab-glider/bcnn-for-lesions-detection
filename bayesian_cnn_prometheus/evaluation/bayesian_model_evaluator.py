@@ -6,7 +6,7 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from bayesian_cnn_prometheus.constants import Paths
-from bayesian_cnn_prometheus.evaluation.utils import get_lungs_bounding_box_coords, load_lungs_mask, load_nifti_file, save_as_nifti, standardize_image
+from bayesian_cnn_prometheus.evaluation.utils import save_as_nifti, standardize_image
 from bayesian_cnn_prometheus.learning.model.bayesian_vnet import BayesianVnet
 
 Window = Tuple[int, int, int]
@@ -26,8 +26,7 @@ class BayesianModelEvaluator:
     def evaluate(self, image: np.ndarray, samples_num: int, stride: Stride) -> List[np.ndarray]:
         """
         Samples model samples_num times and returns list of predictions.
-        :param image_path: path to the image to predict
-        :param segmentation_path: path to the segmentation
+        :param image: image to predict
         :param samples_num: number of samples to make
         :param stride: three-elements list with steps value to make in each axis
         :return: list of arrays with samples_num predictions on image

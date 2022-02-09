@@ -17,6 +17,7 @@ def get_lungs_bounding_box_coords(mask: np.ndarray) -> Tuple[slice, slice, slice
     ends = [max(idxs[i]) for i in range(mask.ndim)]
     return tuple(slice(s, e) for s, e in zip(starts, ends))
 
+
 def load_lungs_mask(path: str) -> np.ndarray:
     image = load_nifti_file(path)
     return image.astype(bool).astype('int16')
@@ -27,13 +28,16 @@ def load_nifti_file(file_path: str) -> np.ndarray:
     return nifti.get_fdata()
 
 
-def standardize_image(array) -> np.ndarray:
-    mean_intensity = np.mean(array)
-    std_intensity = np.std(array)
-    percentile_99_5 = np.percentile(array, 99.5)
-    percentile_00_5 = np.percentile(array, 00.5)
+def standardize_image(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    masked_image = np.ma.masked_array(image, mask=mask)
 
-    normalized_image = np.clip(array, percentile_00_5, percentile_99_5)
+    mean_intensity = np.mean(masked_image)
+    std_intensity = np.std(masked_image)
+
+    percentile_99_5 = np.percentile(masked_image, 99.5)
+    percentile_00_5 = np.percentile(masked_image, 00.5)
+
+    normalized_image = np.clip(image, percentile_00_5, percentile_99_5)
     normalized_image = (normalized_image - mean_intensity) / std_intensity
     return normalized_image
 
