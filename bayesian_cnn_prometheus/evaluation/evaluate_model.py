@@ -59,9 +59,8 @@ def create_predictions_dir(weights_path: Path):
     return prediction_path
 
 
-def crop_image_to_bounding_box_with_lungs(image, lungs_segmentation_path: str):
-    lungs_mask = load_lungs_mask(lungs_segmentation_path)
-    lungs_bounding_box_coords = get_lungs_bounding_box_coords(lungs_mask)
+def crop_image_to_bounding_box_with_lungs(image, lungs_segmentation):
+    lungs_bounding_box_coords = get_lungs_bounding_box_coords(lungs_segmentation)
     return image[lungs_bounding_box_coords]
 
 
@@ -82,7 +81,8 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
 
     nifti = nib.load(image_path)
     image = load_nifti_file(image_path)
-    image = crop_image_to_bounding_box_with_lungs(image, segmentation_path)
+    segmentation = load_lungs_mask(segmentation_path)
+    image = crop_image_to_bounding_box_with_lungs(image, segmentation)
 
     model_evaluator = BayesianModelEvaluator(
         str(weights_path),
@@ -91,6 +91,7 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
 
     predictions = model_evaluator.evaluate(
         image,
+        segmentation,
         prediction_options.mc_sample,
         prediction_options.stride)
 

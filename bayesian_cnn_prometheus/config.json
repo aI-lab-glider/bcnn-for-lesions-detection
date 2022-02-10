@@ -1,54 +1,54 @@
 {
-  "preprocessing": {
-    "transform_nifti_to_npy": {
-      "ext": "nii.gz"
+    "preprocessing": {
+        "transform_nifti_to_npy": {
+            "ext": "nii.gz"
+        },
+        "update_healthy_patients_indices": false,
+        "normalize_images": {
+            "is_activated": true
+        },
+        "create_data_structure": {
+            "train_part": 0.75,
+            "valid_part": 0.15,
+            "test_part": 0.1
+        },
+        "create_chunks": {
+            "should_augment": true,
+            "should_shuffle": false,
+            "chunk_size": [
+                128,
+                16,
+                16
+            ],
+            "stride": [
+                64,
+                16,
+                16
+            ]
+        }
     },
-    "update_healthy_patients_indices": false,
-    "normalize_images": {
-      "is_activated": true
+    "prior_std": 1,
+    "kernel_size": 3,
+    "activation": "relu",
+    "padding": "SAME",
+    "kl_alpha": 0,
+    "kl_start_epoch": 2,
+    "kl_alpha_increase_per_epoch": 0.5,
+    "epochs": 50,
+    "validation_steps": 5,
+    "initial_epoch": 0,
+    "batch_size": 16,
+    "lr_decay_start_epoch": 10,
+    "mc_samples": 10,
+    "should_perform_binarization": false,
+    "evaluation": {
+        "model_name": null,
+        "patient_id": null
     },
-    "create_data_structure": {
-      "train_part": 0.75,
-      "valid_part": 0.15,
-      "test_part": 0.1
+    "mask_analysis": {
+        "model_name": null,
+        "lesion_masks_path": null,
+        "variance_masks_path": null
     },
-    "create_chunks": {
-      "should_shuffle": true,
-      "chunk_size": [
-        64,
-        64,
-        32
-      ],
-      "stride": [
-        32,
-        32,
-        16
-      ]
-    }
-  },
-  "weights_dir": "weights",
-  "weights_path": null,
-  "prior_std": 1,
-  "kernel_size": 3,
-  "activation": "relu",
-  "padding": "SAME",
-  "kl_alpha": 0,
-  "kl_start_epoch": 2,
-  "kl_alpha_increase_per_epoch": 0.5,
-  "epochs": 3,
-  "validation_steps": 5,
-  "initial_epoch": 0,
-  "batch_size": 32,
-  "lr_decay_start_epoch": 10,
-  "mc_samples": 20,
-  "should_perform_binarization": false,
-  "evaluation": {
-    "model_name": null,
-    "patient_id": null
-  },
-  "mask_analysis": {
-    "model_name": null,
-    "lesion_masks_path": null,
-    "variance_masks_path": null
-  }
+    "weights_dir": "experiments/with_augmentation/chunk_size_16_128_16"
 }

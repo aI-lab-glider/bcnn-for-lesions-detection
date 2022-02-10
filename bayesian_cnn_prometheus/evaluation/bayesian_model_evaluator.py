@@ -23,15 +23,16 @@ class BayesianModelEvaluator:
         self.chunk_size = chunk_size
         self.weights_path = weights_path
 
-    def evaluate(self, image: np.ndarray, samples_num: int, stride: Stride) -> List[np.ndarray]:
+    def evaluate(self, image: np.ndarray, segmentation: np.ndarray, samples_num: int, stride: Stride) -> List[np.ndarray]:
         """
         Samples model samples_num times and returns list of predictions.
         :param image: image to predict
+        :param segmentation: lungs segmentation mask
         :param samples_num: number of samples to make
         :param stride: three-elements list with steps value to make in each axis
         :return: list of arrays with samples_num predictions on image
         """
-        image = standardize_image(image)
+        image = standardize_image(image, segmentation)
         image_chunks, coords = self._create_chunks(image, stride)
 
         model = self.load_saved_model(self.weights_path, self.chunk_size)

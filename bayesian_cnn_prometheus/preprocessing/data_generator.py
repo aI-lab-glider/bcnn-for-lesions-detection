@@ -72,7 +72,7 @@ class DataGenerator:
         return self._get_data_generator(DatasetType.TEST, self.batch_size)
 
     def get_valid(self):
-        return self._get_data_generator(DatasetType.VALID, self.batch_size)
+        return self._get_data_generator(DatasetType. VALID, self.batch_size)
 
     def _get_data_generator(self, dataset_type: str, batch_size: int):
         return functools.partial(self._generate_data, dataset_type, batch_size)
