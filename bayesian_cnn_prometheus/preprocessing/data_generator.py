@@ -85,7 +85,7 @@ class DataGenerator:
         :return: generator that produces array with chunks
         """
         for x_npy, y_npy in self._image_flow(dataset_type):
-            x_npy_norm = DataGenerator.normalize(x_npy) if self.should_normalise else x_npy
+            x_npy_norm = DataGenerator.normalize(x_npy, y_npy) if self.should_normalise else x_npy
             images_chunks, targets_chunks = [], []
 
             for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
@@ -154,10 +154,11 @@ class DataGenerator:
         return coords
 
     @staticmethod
-    def normalize(image: np.ndarray) -> np.ndarray:
+    def normalize(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
         """
         Transforms data to have mean 0 and std 1 (standardize).
         :param image: non-standardized image to transform
+        :param mask: label for this image
         :return standardized image
         """
-        return standardize_image(image)
+        return standardize_image(image, mask)
