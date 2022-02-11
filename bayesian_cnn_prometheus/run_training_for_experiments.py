@@ -40,7 +40,7 @@ class ExperimentSetup:
             }],
             }
         }
-        
+
         """
         overrides_for_keys = [
             [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']]
@@ -140,47 +140,18 @@ class Args:
 
 
 if __name__ == '__main__':
-    stride_exp = {
-        'name': 'stride_change',
-        # Assumption: smaller stride will improve model quality because model will see more data,
-        #  and more importantly it will see siimilar data in different contexts
-        'overrides': [
-            {
-                'alias': 's',
-                'key': 'preprocessing.create_chunks.stride',
-                'values': [
-                    [64, 8, 8],
-                    [64, 16, 16],
-                    [128, 16, 16],
-                    [128, 32, 32]
-                ]
-            },
-            {
-                'alias': 'cs',
-                'key': 'preprocessing.create_chunks.chunk_size',
-                'values': [[128, 16, 16]]
-            }
-        ],
-    }
-
     chunk_exp = {
         'name': 'chunk_change',
-        # Assumption: bigger window will see more context and be able to get more precise results
         'overrides': [
             {
                 'alias': 's',
                 'key': 'preprocessing.create_chunks.chunk_size',
-                'values': [
-                    [4, 256, 4],
-                    [8, 256, 8],
-                    [32, 64, 32],
-                    [8, 128, 32]
-                ]
+                'values': [[128, 16, 16]]
             },
             {
                 'alias': 'cs',
                 'key': 'preprocessing.create_chunks.stride',
-                'values': [[16, 64, 16]]
+                'values': [[64, 16, 16]]
             }
         ],
     }

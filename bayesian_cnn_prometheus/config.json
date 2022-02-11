@@ -50,5 +50,5 @@
         "lesion_masks_path": null,
         "variance_masks_path": null
     },
-    "weights_dir": "experiments/with_augmentation/chunk_size_16_128_16"
+    "weights_dir": "experiments/with_augmentation/chunk_size_128_16_16"
 }
