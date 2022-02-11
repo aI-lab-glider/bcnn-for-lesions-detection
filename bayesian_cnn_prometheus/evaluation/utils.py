@@ -19,6 +19,7 @@ def get_lungs_bounding_box_coords(mask: np.ndarray) -> Tuple[slice, slice, slice
 
 def load_lungs_mask(path: str) -> np.ndarray:
     image = load_nifti_file(path)
+    
     return image.astype(bool).astype('int16')
 
 

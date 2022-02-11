@@ -13,7 +13,7 @@ from bayesian_cnn_prometheus.constants import Paths
 from itertools import chain
 
 
-EXPERIMENTS_DIR = Path('experiments')/'control_group'
+EXPERIMENTS_DIR = Path('experiments')/'smaller_epochs'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
 
 
@@ -146,49 +146,33 @@ class Args:
 
 
 if __name__ == '__main__':
-    stride_exp = {
-        'name': 'stride_change', # Assumption: smaller stride will improve model quality because model will see more data,
-        #  and more importantly it will see siimilar data in different contexts
-        'overrides': [
-            {
-                'alias': 's',
-                'key': 'preprocessing.create_chunks.stride',
-                'values': [
-                    [64, 8, 8],
-                    [64, 16, 16], 
-                    [128, 16, 16], 
-                    [128, 32, 32]
-                ]
-            },
-            {
-                'alias': 'cs',
-                'key': 'preprocessing.create_chunks.chunk_size',
-                'values': [[128, 16, 16]]
-            }
-        ],
-    }
-
-    chunk_exp = {
+   
+    exp = {
         'name': 'chunk_change', # Assumption: bigger window will see more context and be able to get more precise results
         'overrides': [
             {
                 'alias': 's',
                 'key': 'preprocessing.create_chunks.chunk_size',
                 'values': [
-                    [4, 256, 4],
-                    [8, 256, 8], 
-                    [32, 64, 32], 
-                    [8, 128, 32]
+                    [128, 16, 16]
                 ]
             },
             {
                 'alias': 'cs',
                 'key': 'preprocessing.create_chunks.stride',
-                'values': [[16, 64, 16]]
-            }
+                'values': [
+                    [64,64,32],
+                    # [128,16,16]
+                ]
+            },
+            {
+                'alias': 'th',
+                'key': 'preprocessing.create_chunks.cutoff_threshold',
+                'values': [0.9]
+            },
         ],
     }
-    experiments = [chunk_exp]
+    experiments = [exp]
     args = Args.parse()
     experiments = list(chain(*[ExperimentSetup.from_accumulated_dict(e) for e in experiments]))
     run_tests(experiments, args.is_local_execution)

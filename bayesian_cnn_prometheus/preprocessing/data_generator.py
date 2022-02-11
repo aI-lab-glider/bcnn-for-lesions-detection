@@ -29,6 +29,7 @@ class DataGeneratorConfig:
     chunk_size: Tuple[int, int, int]
     should_shuffle: bool
     should_augment: bool = True
+    cutoff_threshold: float = 0.9
 
 
 class DataGenerator:
@@ -44,6 +45,8 @@ class DataGenerator:
 
         self.config = config = DataGeneratorConfig(
             **preprocessing_config['create_chunks'])
+
+        self.threshold = preprocessing_config.get('cutoff_threshold', None) or 0.9
 
         self.data_splitter = DataSplitter(preprocessing_config['create_data_structure'],
                                           preprocessing_config['update_healthy_patients_indices'])
@@ -90,6 +93,10 @@ class DataGenerator:
 
             for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
                                         self._generate_chunks(y_npy, self.config.chunk_size, self.config.stride)):
+                
+                if self._is_mostly_lung_chunk(y_chunk):
+                    continue
+                
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))
                 y_chunk = y_chunk.reshape((*y_chunk.shape, 1))
 
@@ -100,6 +107,15 @@ class DataGenerator:
                     if self.config.should_shuffle:
                         images_chunks, targets_chunks = self._shuffle_chunks(images_chunks, targets_chunks)
                     yield np.array(images_chunks), np.array(targets_chunks)
+
+    
+    def _is_mostly_lung_chunk(self, chunk_mask: np.array):
+        labels_sum_if_lung = np.ones(chunk_mask.shape).sum()
+        actual_sum = chunk_mask.sum()
+        return (actual_sum / labels_sum_if_lung) > self.threshold
+
+        
+
 
     def _image_flow(self, dataset_type: str):
         for image_index in self.dataset_structure[dataset_type]:
