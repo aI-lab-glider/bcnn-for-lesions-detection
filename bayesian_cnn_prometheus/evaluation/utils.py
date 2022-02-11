@@ -29,7 +29,8 @@ def load_nifti_file(file_path: str) -> np.ndarray:
 
 
 def standardize_image(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    masked_image = np.ma.masked_array(image, mask=~mask)
+    # masked_image = np.ma.masked_array(image, mask=~mask)
+    masked_image = image
 
     mean_intensity = np.mean(masked_image)
     std_intensity = np.std(masked_image)

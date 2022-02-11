@@ -1,0 +1,9 @@
+setuptools~=41.2.0
+numpy~=1.22.1
+nibabel~=3.2.1
+batchgenerators~=0.23
+tqdm~=4.62.3
+scikit-image~=0.17.2
+tensorflow~=2.7.0
+opencv-python~=4.5.5.62
+argparse~=1.4.0

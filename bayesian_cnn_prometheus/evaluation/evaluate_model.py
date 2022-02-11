@@ -83,6 +83,7 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
     image = load_nifti_file(image_path)
     segmentation = load_lungs_mask(segmentation_path)
     image = crop_image_to_bounding_box_with_lungs(image, segmentation)
+    segmentation = crop_image_to_bounding_box_with_lungs(segmentation, segmentation)
 
     model_evaluator = BayesianModelEvaluator(
         str(weights_path),
