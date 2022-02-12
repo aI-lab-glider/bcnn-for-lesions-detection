@@ -28,7 +28,7 @@ def get_patients_to_predict():
                          171, 173, 175, 177, 178, 179, 180, 181, 182, 183, 184, 186, 188, 189, 190, 191, 192, 195, 199,
                          202, 204, 205, 206, 207, 209, 211, 212, 213, 215, 216, 218,
                          219, 223, 224, 225, 230, 231, 232, 233, 235, 236, 237, 239]
-    return [3]  # random.sample(idxs_with_lesions, k=3)
+    return [3]  # , 4, 191]  # random.sample(idxs_with_lesions, k=3)
 
 
 def main():
@@ -39,8 +39,8 @@ def main():
     results_dir = create_predictions_dir(weights_path)
     pacient_idxs = get_patients_to_predict()
     prediction_options = PredictionOptions(
-        chunk_size=model_config['preprocessing']['create_chunks']['chunk_size'],
-        stride=model_config['preprocessing']['create_chunks']['stride'],
+        chunk_size=model_config['evaluation']['chunk_size'],
+        stride=model_config['evaluation']['stride'],
         mc_sample=model_config['mc_samples']
     )
     for idx in pacient_idxs:
@@ -52,16 +52,15 @@ def get_latest_weights_from_folder(folder: Path):
 
 
 def create_predictions_dir(weights_path: Path):
-    weights_folder_name = weights_path.stem.split('.')[:-1]
+    weights_folder_name = weights_path.stem
     predictions_folder_name = f"{''.join(weights_folder_name)}_predictions"
     prediction_path = Path(weights_path.parent) / predictions_folder_name
     Path(prediction_path).mkdir(parents=True, exist_ok=True)
     return prediction_path
 
 
-def crop_image_to_bounding_box_with_lungs(image, lungs_segmentation_path: str):
-    lungs_mask = load_lungs_mask(lungs_segmentation_path)
-    lungs_bounding_box_coords = get_lungs_bounding_box_coords(lungs_mask)
+def crop_image_to_bounding_box_with_lungs(image, lungs_segmentation):
+    lungs_bounding_box_coords = get_lungs_bounding_box_coords(lungs_segmentation)
     return image[lungs_bounding_box_coords]
 
 
@@ -82,7 +81,9 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
 
     nifti = nib.load(image_path)
     image = load_nifti_file(image_path)
-    image = crop_image_to_bounding_box_with_lungs(image, segmentation_path)
+    segmentation = load_lungs_mask(segmentation_path)
+    image = crop_image_to_bounding_box_with_lungs(image, segmentation)
+    cropped_segmentation = crop_image_to_bounding_box_with_lungs(segmentation, segmentation)
 
     model_evaluator = BayesianModelEvaluator(
         str(weights_path),
@@ -91,20 +92,22 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
 
     predictions = model_evaluator.evaluate(
         image,
+        cropped_segmentation,
         prediction_options.mc_sample,
         prediction_options.stride)
 
     mask = load_lungs_mask(mask_path)
-    mask = crop_image_to_bounding_box_with_lungs(mask, segmentation_path)
+    mask = crop_image_to_bounding_box_with_lungs(mask, segmentation)
     save_as_nifti(image, results_dir / f'LUNGS_BOUNDING_BOX_{patient_idx}', nifti.affine, nifti.header)
     save_as_nifti(mask, results_dir / f'LESION_{patient_idx}', nifti.affine, nifti.header)
     model_evaluator.save_predictions(
         results_dir,
         patient_idx,
         predictions,
+        cropped_segmentation,
         nifti.affine,
         nifti.header,
-        False)
+        True)
 
 
 if __name__ == '__main__':

@@ -5,17 +5,15 @@ import operator
 import os
 from dataclasses import dataclass
 from functools import reduce
+from itertools import chain
 from itertools import product
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
 from bayesian_cnn_prometheus.constants import Paths
-from itertools import chain
 
-
-EXPERIMENTS_DIR = Path('experiments')/'control_group'
+EXPERIMENTS_DIR = Path('experiments') / 'control_group'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
-
 
 
 @dataclass
@@ -42,22 +40,21 @@ class ExperimentSetup:
             }],
             }
         }
-        
+
         """
         overrides_for_keys = [
-            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']] 
+            [Override(key=override['key'], value=value, alias=override['alias']) for value in override['values']]
             for override in accumulated_config['overrides']
-            ]
-        
-        return [ExperimentSetup(name=f'{accumulated_config["name"]}', overrides=overrides).with_verbose_name() for overrides in product(*overrides_for_keys)]
+        ]
+
+        return [ExperimentSetup(name=f'{accumulated_config["name"]}', overrides=overrides).with_verbose_name() for
+                overrides in product(*overrides_for_keys)]
 
     def with_verbose_name(self) -> 'ExperimentSetup':
         overrides_key = "_".join([str(o) for o in self.overrides])
         name = f'{self.name}_{overrides_key}'
         return ExperimentSetup(name=name, overrides=self.overrides)
 
-
-    
 
 @dataclass
 class Override:
@@ -81,8 +78,6 @@ class Override:
         return f'{key}_{value}'
 
 
-
-
 def run_tests(experiments: Iterable[ExperimentSetup], is_local_execution):
     for experiment in experiments:
         experiment_dir = create_experiment_dir(experiment)
@@ -92,7 +87,6 @@ def run_tests(experiments: Iterable[ExperimentSetup], is_local_execution):
         command = 'python' if is_local_execution else f'sbatch {sbatch_script_path}'
         os.system(f'{command} {Paths.PROJECT_DIR / "main.py"} {config_path}')
         print('Submitted ', experiment_dir)
-
 
 
 def create_config(weights_dir: str, overrides: Iterable[Override]):
@@ -146,45 +140,18 @@ class Args:
 
 
 if __name__ == '__main__':
-    stride_exp = {
-        'name': 'stride_change', # Assumption: smaller stride will improve model quality because model will see more data,
-        #  and more importantly it will see siimilar data in different contexts
+    chunk_exp = {
+        'name': 'chunk_change',
         'overrides': [
             {
                 'alias': 's',
-                'key': 'preprocessing.create_chunks.stride',
-                'values': [
-                    [64, 8, 8],
-                    [64, 16, 16], 
-                    [128, 16, 16], 
-                    [128, 32, 32]
-                ]
-            },
-            {
-                'alias': 'cs',
                 'key': 'preprocessing.create_chunks.chunk_size',
                 'values': [[128, 16, 16]]
-            }
-        ],
-    }
-
-    chunk_exp = {
-        'name': 'chunk_change', # Assumption: bigger window will see more context and be able to get more precise results
-        'overrides': [
-            {
-                'alias': 's',
-                'key': 'preprocessing.create_chunks.chunk_size',
-                'values': [
-                    [4, 256, 4],
-                    [8, 256, 8], 
-                    [32, 64, 32], 
-                    [8, 128, 32]
-                ]
             },
             {
                 'alias': 'cs',
                 'key': 'preprocessing.create_chunks.stride',
-                'values': [[16, 64, 16]]
+                'values': [[64, 16, 16]]
             }
         ],
     }

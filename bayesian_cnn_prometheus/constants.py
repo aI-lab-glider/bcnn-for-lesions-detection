@@ -19,7 +19,6 @@ class Paths:
     PROJECT_DIR = Path(bayesian_cnn_prometheus.__file__).parent
     DATA_DIR = PROJECT_DIR.parent/'data'
 
-
     CONFIG_PATH = PROJECT_DIR / 'config.local.json'
 
     MASKS_DIR = 'LESIONS'
