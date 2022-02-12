@@ -15,17 +15,16 @@ from bayesian_cnn_prometheus.evaluation.utils import get_patient_index, load_nif
 
 
 class LesionsAnalyzer:
-    def __init__(self, model_path: str, input_path: str, output_path: str, prediction_options: PredictionOptions):
+    def __init__(self, model_path: str, input_path: str, prediction_options: PredictionOptions):
         """
         Creates LesionsAnalyzer instance.
         :param model_path: path to the model in h5 form
         :param input_path: path to the directory with images, lesions and segmentations labels
-        :param output_path: path to the directory where output variances and results file will be saved
-        :param prediction_options: parameters for prediction
+]        :param prediction_options: parameters for prediction
         """
         self.model_path = model_path
         self.input_path = input_path
-        self.output_path = output_path
+        self.output_path = os.path.join(input_path, Paths.RESULTS_DIR)
         self.prediction_options = prediction_options
         self.model_evaluator = BayesianModelEvaluator(self.model_path, prediction_options.chunk_size)
         self.results = {'chunks_analyse': {'overall': {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}},
@@ -60,8 +59,8 @@ class LesionsAnalyzer:
             self._analyze_chunks(patient_idx, cropped_mask, variance)
             self._analyze_voxels(patient_idx, cropped_mask, variance)
 
-        with open(os.path.join(self.output_path, 'results.json'), 'w') as fp:
-            json.dump(self.results, fp)
+        self._summarize_results()
+        self._save_results()
 
     def _analyze_chunks(self, patient_idx, mask: np.ndarray, variance: np.ndarray):
         self.results['chunks_analyse'][patient_idx] = {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}
@@ -128,3 +127,16 @@ class LesionsAnalyzer:
         if ground_truth and not prediction:
             self.results[analyse_type][patient_idx]['fn'] += 1
             self.results[analyse_type]['overall']['fn'] += 1
+
+    def _summarize_results(self):
+        for analyse_type in self.results.keys():
+            overall = self.results[analyse_type]['overall']
+
+            self.results[analyse_type]['overall']['tpr'] = overall['tp'] / max(1, (overall['tp'] + overall['fn']))
+            self.results[analyse_type]['overall']['tnr'] = overall['tn'] / max(1, (overall['tn'] + overall['fp']))
+
+    def _save_results(self):
+        model_name = Path(self.model_path).stem
+        results_path = os.path.join(self.output_path, f'results_{model_name}.json')
+        with open(results_path, 'w') as r:
+            json.dump(self.results, r)
