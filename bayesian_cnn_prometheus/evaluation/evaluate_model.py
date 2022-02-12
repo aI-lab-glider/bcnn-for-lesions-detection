@@ -39,8 +39,8 @@ def main():
     results_dir = create_predictions_dir(weights_path)
     pacient_idxs = get_patients_to_predict()
     prediction_options = PredictionOptions(
-        chunk_size=model_config['preprocessing']['create_chunks']['chunk_size'],
-        stride=model_config['preprocessing']['create_chunks']['stride'],
+        chunk_size=model_config['evaluation']['chunk_size'],
+        stride=model_config['evaluation']['stride'],
         mc_sample=model_config['mc_samples']
     )
     for idx in pacient_idxs:
@@ -107,7 +107,6 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
         cropped_segmentation,
         nifti.affine,
         nifti.header)
-
 
 if __name__ == '__main__':
     main()
