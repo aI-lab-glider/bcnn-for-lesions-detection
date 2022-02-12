@@ -106,8 +106,7 @@ def make_prediction(weights_path: Path, patient_idx, prediction_options: Predict
         predictions,
         cropped_segmentation,
         nifti.affine,
-        nifti.header,
-        True)
+        nifti.header)
 
 
 if __name__ == '__main__':

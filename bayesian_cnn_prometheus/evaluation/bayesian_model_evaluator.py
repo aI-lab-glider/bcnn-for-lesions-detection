@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import cv2 as cv
 import numpy as np
@@ -94,14 +94,14 @@ class BayesianModelEvaluator:
     @classmethod
     def save_predictions(
         cls, dir_path: Path, patient_idx: int, predictions, lungs_mask, affine: np.ndarray,
-            nifti_header, should_binarize_prediction) -> None:
+            nifti_header) -> None:
         """
         Saves predictions list in nifti file.
         :param patient_id: four-digit patient id
         :param predictions: list of arrays with predictions
         """
         predictions = np.array(predictions)
-        segmentation = cls.get_segmentation_from_mean(predictions, should_binarize_prediction)
+        segmentation = cls.get_segmentation_from_mean(predictions)
         variance = cls.get_segmentation_variance(predictions, lungs_mask)
         predictions_path = dir_path / Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(segmentation, predictions_path, affine, nifti_header)
@@ -109,7 +109,7 @@ class BayesianModelEvaluator:
         save_as_nifti(variance, variance_path, affine, nifti_header)
 
     @staticmethod
-    def get_segmentation_from_mean(predictions, should_binarize_prediction):
+    def get_segmentation_from_mean(predictions):
         segmentation = np.mean(predictions, axis=0)
         return segmentation
 
