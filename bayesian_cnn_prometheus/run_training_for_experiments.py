@@ -13,7 +13,7 @@ from bayesian_cnn_prometheus.constants import Paths
 from itertools import chain
 
 
-EXPERIMENTS_DIR = Path('experiments')/'smaller_epochs'
+EXPERIMENTS_DIR = Path('experiments')/'correct_data_augmentation'
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
 
 

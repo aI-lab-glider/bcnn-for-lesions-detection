@@ -94,7 +94,7 @@ class DataGenerator:
             for x_chunk, y_chunk in zip(self._generate_chunks(x_npy_norm, self.config.chunk_size, self.config.stride),
                                         self._generate_chunks(y_npy, self.config.chunk_size, self.config.stride)):
                 
-                if self._is_mostly_lung_chunk(y_chunk):
+                if not self._is_mostly_lung_chunk(y_chunk):
                     continue
                 
                 x_chunk = x_chunk.reshape((*x_chunk.shape, 1))

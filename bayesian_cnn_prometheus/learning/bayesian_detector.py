@@ -86,10 +86,10 @@ class BayesianDetector:
         return K.variable(kl_alpha)
 
     def fit(self, training_dataset, validation_dataset):
-        self._model.fit(x=training_dataset.repeat(), epochs=self._epochs, initial_epoch=self._initial_epoch,
+        self._model.fit(x=training_dataset, epochs=self._epochs, initial_epoch=self._initial_epoch,
                         callbacks=[self._checkpointer, self._scheduler, self._annealer, self._tensorboard_callback],
                         validation_data=validation_dataset.repeat(),
-                        validation_steps=self._validation_steps, steps_per_epoch=300)
+                        validation_steps=self._validation_steps)
 
     def _get_paths(self, network_type: str):
         Path(self._weights_dir).mkdir(parents=True, exist_ok=True)
