@@ -19,12 +19,13 @@ class ImageLoader:
         :param image_index: index of image to be transformed
         :return: image and target as numpy arrays
         """
-        image_file_path, target_file_path = self._get_files_names(
+        image_file_path, target_file_path, lesion_mask_path = self._get_files_names(
             image_index, 'nii.gz')
         image = self._load_image(image_file_path)
         mask = load_lungs_mask(str(target_file_path))
         lungs_bounding_box = get_lungs_bounding_box_coords(mask)
-        return image[lungs_bounding_box], mask[lungs_bounding_box] 
+        lesion_mask = self._load_nifti_as_npy(lesion_mask_path)
+        return image[lungs_bounding_box], (mask[lungs_bounding_box] - lesion_mask[lungs_bounding_box])
 
     def _load_image(self, path):
         if self.extension == 'nii.gz':
@@ -49,7 +50,7 @@ class ImageLoader:
             raise Exception(f'File {nifti_file_path} does not exist!')
 
     @staticmethod
-    def _get_files_names(image_index: str, file_format: str) -> Tuple[Path, Path]:
+    def _get_files_names(image_index: str, file_format: str) -> Tuple[Path, Path, Path]:
         """
         On the base of the image index generates paths to image and target arrays.
         :param image_index: index of the image to be transformed
@@ -60,4 +61,6 @@ class ImageLoader:
             f'{image_index:0>4}', file_format)
         target_file_path = str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN_PATH).format(
             f'{image_index:0>4}', file_format)
-        return Path(image_file_path), Path(target_file_path)
+        lesion_mask_path = str(Paths.MASK_FILE_PATTERN_PATH).format(
+            f'{image_index:0>4}', file_format)
+        return Path(image_file_path), Path(target_file_path), Path(lesion_mask_path)
