@@ -161,4 +161,4 @@ class DataGenerator:
         :param mask: label for this image
         :return standardized image
         """
-        return standardize_image(image, mask)
+        return standardize_image(image)

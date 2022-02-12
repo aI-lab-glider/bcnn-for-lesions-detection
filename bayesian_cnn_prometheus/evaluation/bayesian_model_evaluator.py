@@ -35,7 +35,7 @@ class BayesianModelEvaluator:
         :param should_binarize_prediction: should prediction be binarized
         :return: list of arrays with samples_num predictions on image
         """
-        image = standardize_image(image, segmentation)
+        image = standardize_image(image)
         image_chunks, coords = self._create_chunks(image, stride)
 
         model = self.load_saved_model(self.weights_path, self.chunk_size)
@@ -92,32 +92,32 @@ class BayesianModelEvaluator:
             [slice(dim_start, dim_start + chunk_dim) for (dim_start, chunk_dim) in zip(coord, self.chunk_size[:3])])
 
     @classmethod
-    def save_predictions(cls, dir_path: Path, patient_idx: int, predictions, affine: np.ndarray, nifti_header,
-                         should_perform_binarization: bool) -> None:
+    def save_predictions(
+        cls, dir_path: Path, patient_idx: int, predictions, lungs_mask, affine: np.ndarray,
+            nifti_header, should_binarize_prediction) -> None:
         """
         Saves predictions list in nifti file.
         :param patient_id: four-digit patient id
         :param predictions: list of arrays with predictions
         """
         predictions = np.array(predictions)
-        segmentation = cls.get_segmentation_from_mean(predictions, should_perform_binarization)
-        variance = cls.get_segmentation_variance(predictions)
+        segmentation = cls.get_segmentation_from_mean(predictions, should_binarize_prediction)
+        variance = cls.get_segmentation_variance(predictions, lungs_mask)
         predictions_path = dir_path / Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(segmentation, predictions_path, affine, nifti_header)
         variance_path = dir_path / Paths.VARIANCE_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(variance, variance_path, affine, nifti_header)
 
     @staticmethod
-    def get_segmentation_from_mean(predictions, should_perform_binarization=False, threshold=0.463):
+    def get_segmentation_from_mean(predictions, should_binarize_prediction):
         segmentation = np.mean(predictions, axis=0)
-        if should_perform_binarization:
-            segmentation[segmentation > threshold] = 1.
-            segmentation[segmentation <= threshold] = 0.
         return segmentation
 
     @staticmethod
-    def get_segmentation_variance(predictions):
-        return np.var(predictions, axis=0)
+    def get_segmentation_variance(predictions, mask):
+        predictions_variance = np.var(predictions, axis=0)
+        predictions_variance[~mask.astype(bool)] = 0
+        return predictions_variance
 
     def load_saved_model(self, weights_path: str, chunk_size: Window) -> BayesianVnet:
         """
@@ -134,12 +134,15 @@ class BayesianModelEvaluator:
         model.load_weights(weights_path)
         return model
 
-    @staticmethod
-    def binarize_prediction(mean_prediction: np.ndarray) -> np.ndarray:
+    def binarize_prediction(self, mean_prediction: np.ndarray) -> np.ndarray:
+        mean_prediction = mean_prediction.copy()
         mean_prediction = mean_prediction * 255
         mean_prediction = mean_prediction.astype(np.uint8)
         max_value = np.max(mean_prediction)
-        binarized_prediction = cv.adaptiveThreshold(mean_prediction, max_value, cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                                    cv.THRESH_BINARY, 11, 2)
 
-        return binarized_prediction
+        for i in range(mean_prediction.shape[0]):
+            im_slice = mean_prediction[i]
+            max_value = np.max(im_slice)
+            mean_prediction[i, :, :] = cv.adaptiveThreshold(
+                im_slice, max_value, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 129, 3)
+        return mean_prediction
