@@ -2,7 +2,7 @@ import glob
 import json
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 
 import nibabel as nib
 import numpy as np
@@ -15,17 +15,21 @@ from bayesian_cnn_prometheus.evaluation.utils import get_patient_index, load_nif
 
 
 class LesionsAnalyzer:
-    def __init__(self, model_path: str, input_path: str, prediction_options: PredictionOptions):
+    def __init__(self, model_path: str, input_path: str, prediction_options: PredictionOptions,
+                 patients_to_analysis: List[int] = None):
         """
         Creates LesionsAnalyzer instance.
         :param model_path: path to the model in h5 form
         :param input_path: path to the directory with images, lesions and segmentations labels
-]        :param prediction_options: parameters for prediction
+        :param prediction_options: parameters for prediction
+        :param patients_to_analysis: indices of patients to perform analysis on them, if None - every patient
+        in the input dir will be analyzed
         """
         self.model_path = model_path
         self.input_path = input_path
         self.output_path = os.path.join(input_path, Paths.RESULTS_DIR)
         self.prediction_options = prediction_options
+        self.patients_to_analysis = patients_to_analysis
         self.model_evaluator = BayesianModelEvaluator(self.model_path, prediction_options.chunk_size)
         self.results = {'chunks_analyse': {'overall': {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}},
                         'voxels_analyse': {'overall': {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}}}
@@ -33,6 +37,11 @@ class LesionsAnalyzer:
     def run_analysis(self):
         for image_path in tqdm(glob.glob(os.path.join(self.input_path, Paths.IMAGES_DIR, '*.nii.gz'))):
             patient_idx = get_patient_index(image_path)
+
+            if self.patients_to_analysis:
+                if patient_idx not in self.patients_to_analysis:
+                    continue
+
             segmentation_path = os.path.join(self.input_path, Paths.REFERENCE_SEGMENTATIONS_DIR,
                                              str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN)
                                              .format(f'{patient_idx:0>4}', 'nii.gz'))
