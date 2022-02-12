@@ -35,7 +35,7 @@ class BayesianModelEvaluator:
         :param should_binarize_prediction: should prediction be binarized
         :return: list of arrays with samples_num predictions on image
         """
-        image = standardize_image(image)
+        image = standardize_image(image, segmentation)
         image_chunks, coords = self._create_chunks(image, stride)
 
         model = self.load_saved_model(self.weights_path, self.chunk_size)
@@ -93,15 +93,14 @@ class BayesianModelEvaluator:
 
     @classmethod
     def save_predictions(
-        cls, dir_path: Path, patient_idx: int, predictions, lungs_mask, affine: np.ndarray,
-            nifti_header, should_binarize_prediction) -> None:
+        cls, dir_path: Path, patient_idx: int, predictions, lungs_mask, affine: np.ndarray, nifti_header) -> None:
         """
         Saves predictions list in nifti file.
         :param patient_id: four-digit patient id
         :param predictions: list of arrays with predictions
         """
         predictions = np.array(predictions)
-        segmentation = cls.get_segmentation_from_mean(predictions, should_binarize_prediction)
+        segmentation = cls.get_segmentation_from_mean(predictions)
         variance = cls.get_segmentation_variance(predictions, lungs_mask)
         predictions_path = dir_path / Paths.PREDICTIONS_FILE_PATTERN.format(patient_idx, 'nii.gz')
         save_as_nifti(segmentation, predictions_path, affine, nifti_header)
@@ -109,7 +108,7 @@ class BayesianModelEvaluator:
         save_as_nifti(variance, variance_path, affine, nifti_header)
 
     @staticmethod
-    def get_segmentation_from_mean(predictions, should_binarize_prediction):
+    def get_segmentation_from_mean(predictions):
         segmentation = np.mean(predictions, axis=0)
         return segmentation
 
@@ -138,7 +137,6 @@ class BayesianModelEvaluator:
         mean_prediction = mean_prediction.copy()
         mean_prediction = mean_prediction * 255
         mean_prediction = mean_prediction.astype(np.uint8)
-        max_value = np.max(mean_prediction)
 
         for i in range(mean_prediction.shape[0]):
             im_slice = mean_prediction[i]

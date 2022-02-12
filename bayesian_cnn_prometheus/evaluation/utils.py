@@ -28,22 +28,19 @@ def load_nifti_file(file_path: str) -> np.ndarray:
     return nifti.get_fdata()
 
 
-def standardize_image(image: np.ndarray) -> np.ndarray:
-    masked_image = image
+def standardize_image(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    masked_image = np.ma.masked_array(image, mask=~mask)
+    masked_image = np.ma.filled(masked_image, np.nan)
 
     mean_intensity = np.mean(masked_image)
     std_intensity = np.std(masked_image)
 
-    percentile_99_5 = np.percentile(masked_image, 99.5)
-    percentile_00_5 = np.percentile(masked_image, 00.5)
+    percentile_99_5 = np.nanpercentile(masked_image, 99.5)
+    percentile_00_5 = np.nanpercentile(masked_image, 00.5)
 
     normalized_image = np.clip(image, percentile_00_5, percentile_99_5)
     normalized_image = (normalized_image - mean_intensity) / std_intensity
     return normalized_image
-
-
-def get_standardized_slice(array: np.ndarray, slice_number: int) -> np.ndarray:
-    return standardize_image(array[:, :, slice_number])
 
 
 def save_as_nifti(array: np.ndarray, nifti_path: Path, affine=np.eye(4), header=None) -> None:
