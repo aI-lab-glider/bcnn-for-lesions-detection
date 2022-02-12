@@ -42,8 +42,16 @@
     "mc_samples": 10,
     "should_perform_binarization": false,
     "evaluation": {
-        "model_name": null,
-        "patient_id": null
+        "chunk_size": [
+            128,
+            16,
+            16
+        ],
+        "stride": [
+            64,
+            16,
+            16
+        ]
     },
     "mask_analysis": {
         "model_name": null,
