@@ -8,6 +8,7 @@ import nibabel as nib
 import numpy as np
 from tqdm import tqdm
 
+from bayesian_cnn_prometheus.analysis.apply_variance_postprocess import apply_variance_postprocess
 from bayesian_cnn_prometheus.constants import Paths
 from bayesian_cnn_prometheus.evaluation.bayesian_model_evaluator import BayesianModelEvaluator
 from bayesian_cnn_prometheus.evaluation.evaluate_model import PredictionOptions, crop_image_to_bounding_box_with_lungs
@@ -35,7 +36,7 @@ class LesionsAnalyzer:
         self.results = {'chunks_analyse': {'overall': {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}},
                         'voxels_analyse': {'overall': {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0}}}
 
-    def run_analysis(self):
+    def run_analysis(self, should_postprocess_variance: bool = False):
         for image_path in tqdm(glob.glob(os.path.join(self.input_path, Paths.IMAGES_DIR, '*.nii.gz'))):
             patient_idx = int(get_patient_index(image_path))
 
@@ -65,6 +66,9 @@ class LesionsAnalyzer:
             else:
                 variance = self.get_variance(cropped_image, cropped_segmentation, variance_path, nifti.affine,
                                              nifti.header)
+
+            if should_postprocess_variance:
+                variance = apply_variance_postprocess(variance)
 
             self._analyze_chunks(patient_idx, cropped_mask, variance)
             self._analyze_voxels(patient_idx, cropped_mask, variance)
