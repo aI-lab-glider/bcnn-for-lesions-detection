@@ -16,7 +16,7 @@ from bayesian_cnn_prometheus.evaluation.utils import get_patient_index, load_nif
 
 class LesionsAnalyzer:
     def __init__(self, model_path: str, input_path: str, prediction_options: PredictionOptions,
-                 patients_to_analysis: List[int] = None):
+                 patients_to_analysis: List[int] = None, output_path: str = None):
         """
         Creates LesionsAnalyzer instance.
         :param model_path: path to the model in h5 form
@@ -24,10 +24,11 @@ class LesionsAnalyzer:
         :param prediction_options: parameters for prediction
         :param patients_to_analysis: indices of patients to perform analysis on them, if None - every patient
         in the input dir will be analyzed
+        :param output_path: path to the dir where output should be saved
         """
         self.model_path = model_path
         self.input_path = input_path
-        self.output_path = os.path.join(input_path, Paths.RESULTS_DIR)
+        self.output_path = output_path or os.path.join(input_path, Paths.RESULTS_DIR)
         self.prediction_options = prediction_options
         self.patients_to_analysis = patients_to_analysis
         self.model_evaluator = BayesianModelEvaluator(self.model_path, prediction_options.chunk_size)
@@ -36,7 +37,7 @@ class LesionsAnalyzer:
 
     def run_analysis(self):
         for image_path in tqdm(glob.glob(os.path.join(self.input_path, Paths.IMAGES_DIR, '*.nii.gz'))):
-            patient_idx = get_patient_index(image_path)
+            patient_idx = int(get_patient_index(image_path))
 
             if self.patients_to_analysis:
                 if patient_idx not in self.patients_to_analysis:
@@ -47,7 +48,7 @@ class LesionsAnalyzer:
                                              .format(f'{patient_idx:0>4}', 'nii.gz'))
             mask_path = os.path.join(self.input_path, Paths.MASKS_DIR,
                                      str(Paths.MASK_FILE_PATTERN).format(f'{patient_idx:0>4}', 'nii.gz'))
-            variance_path = os.path.join(self.input_path, Paths.RESULTS_DIR,
+            variance_path = os.path.join(self.output_path,
                                          str(Paths.VARIANCE_FILE_PATTERN).format(f'{patient_idx:0>4}', 'nii.gz'))
 
             nifti = nib.load(image_path)

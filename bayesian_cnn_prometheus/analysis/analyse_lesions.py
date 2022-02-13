@@ -10,6 +10,7 @@ def analyse_lesions():
     model_path = sys.argv[1]
     config_path = sys.argv[2]
     input_path = sys.argv[3]
+    output_path = sys.argv[4]
 
     patients_to_analysis = [3, 4, 5, 6, 8, 10, 11, 14, 17, 21, 26, 27, 29, 30, 32, 34, 35, 36, 37, 39, 41]
 
@@ -19,7 +20,7 @@ def analyse_lesions():
         stride=model_config['preprocessing']['create_chunks']['stride'],
         mc_sample=model_config['mc_samples'])
 
-    lesions_analyzer = LesionsAnalyzer(model_path, input_path, prediction_options, patients_to_analysis)
+    lesions_analyzer = LesionsAnalyzer(model_path, input_path, prediction_options, patients_to_analysis, output_path)
     lesions_analyzer.run_analysis()
 
 

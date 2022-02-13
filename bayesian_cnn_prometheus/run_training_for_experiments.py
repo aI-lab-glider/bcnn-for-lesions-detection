@@ -12,7 +12,7 @@ from typing import Any, Iterable, Optional
 
 from bayesian_cnn_prometheus.constants import Paths
 
-EXPERIMENTS_DIR = Path('experiments') / 'control_group'
+EXPERIMENTS_DIR = Path('experiments_hp50')
 EXPERIMENTS_DIR = str(EXPERIMENTS_DIR)
 
 
@@ -144,14 +144,14 @@ if __name__ == '__main__':
         'name': 'chunk_change',
         'overrides': [
             {
-                'alias': 's',
+                'alias': 'cs',
                 'key': 'preprocessing.create_chunks.chunk_size',
-                'values': [[128, 16, 16]]
+                'values': [[64, 32, 32]]
             },
             {
-                'alias': 'cs',
+                'alias': 's',
                 'key': 'preprocessing.create_chunks.stride',
-                'values': [[64, 16, 16]]
+                'values': [[64, 32, 32]]
             }
         ],
     }

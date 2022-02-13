@@ -138,7 +138,6 @@ class BayesianModelEvaluator:
         mean_prediction = mean_prediction.copy()
         mean_prediction = mean_prediction * 255
         mean_prediction = mean_prediction.astype(np.uint8)
-        max_value = np.max(mean_prediction)
 
         for i in range(mean_prediction.shape[0]):
             im_slice = mean_prediction[i]
