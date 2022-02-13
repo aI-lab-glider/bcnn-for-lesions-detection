@@ -43,6 +43,7 @@ class LesionsAnalyzer:
             if self.patients_to_analysis:
                 if patient_idx not in self.patients_to_analysis:
                     continue
+            print(f'Patient id in analysis: {patient_idx}')
 
             segmentation_path = os.path.join(self.input_path, Paths.REFERENCE_SEGMENTATIONS_DIR,
                                              str(Paths.REFERENCE_SEGMENTATION_FILE_PATTERN)
@@ -82,9 +83,9 @@ class LesionsAnalyzer:
         origin_x, origin_y, origin_z = mask.shape
         stride_x, stride_y, stride_z = self.prediction_options.stride
 
-        for x in range(0, origin_x, stride_x)[:-1]:
-            for y in range(0, origin_y, stride_y)[:-1]:
-                for z in range(0, origin_z, stride_z)[:-1]:
+        for x in range(0, origin_x, stride_x):
+            for y in range(0, origin_y, stride_y):
+                for z in range(0, origin_z, stride_z):
                     mask_chunk = mask[self._get_window((x, y, z))]
                     mask_mean = np.mean(mask_chunk)
 

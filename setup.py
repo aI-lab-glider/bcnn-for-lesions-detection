@@ -16,6 +16,7 @@ setup(
         'scikit-image==0.17.2',
         'scipy==1.5.4',
         'glob2==0.7',
-	'batchgenerators'
+        'batchgenerators',
+        'opencv-python~=4.5.5.62'
     ],
 )
